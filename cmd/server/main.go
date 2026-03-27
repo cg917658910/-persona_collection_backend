@@ -7,12 +7,14 @@ import (
 	"pm-backend/internal/config"
 )
 
+var version = "dev"
+
 func main() {
 	cfg := config.Load()
 	r := router.NewHTTPServer(cfg)
 
 	addr := ":" + cfg.Port
-	log.Printf("starting %s on %s", cfg.AppName, addr)
+	log.Printf("starting %s version=%s on %s", cfg.AppName, version, addr)
 	if err := r.Run(addr); err != nil {
 		log.Fatal(err)
 	}

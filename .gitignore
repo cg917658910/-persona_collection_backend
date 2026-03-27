@@ -1,2 +1,6 @@
 public
 .env
+tmp
+dist
+.env.production
+.env.development

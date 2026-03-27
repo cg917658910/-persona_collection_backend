@@ -1,6 +1,8 @@
-# pm-backend scaffold v4
+# pm-backend scaffold v7
 
-Go + Gin backend scaffold for 拾荒者·人物集, with PostgreSQL repo skeleton and static URL normalization.
+Go + Gin backend scaffold for 拾荒者·人物集.
+
+This version adds **Vben compatible login endpoints**.
 
 ## Run
 
@@ -10,49 +12,64 @@ go mod tidy
 go run ./cmd/server
 ```
 
-## Modes
+## Vben compatible auth APIs
 
-### Mock mode
-```env
-USE_MOCK=true
+### Login
+`POST /api/v1/auth/login`
+
+request:
+```json
+{
+  "username": "admin",
+  "password": "123456"
+}
 ```
 
-### PostgreSQL mode
-```env
-USE_MOCK=false
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/pmdb?sslmode=disable
+response:
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "accessToken": "jwt-token"
+  }
+}
 ```
 
-## Static assets and media URLs
+### User info
+`GET /api/v1/user/info`
 
-Environment:
-
-```env
-PUBLIC_BASE_URL=http://localhost:8080
-STATIC_MOUNT_PREFIX=/static
-STATIC_LOCAL_DIR=./public
+response:
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "userId": "admin-local",
+    "username": "admin",
+    "realName": "管理员",
+    "roles": ["admin"]
+  }
+}
 ```
 
-Behavior:
-- if DB/mock value is already absolute (`http://` / `https://`) -> keep as-is
-- if value starts with `/assets/...` -> convert to:
-  - `http://localhost:8080/static/assets/...`
+### Permission codes
+`GET /api/v1/auth/codes`
 
-## PostgreSQL implemented now
-- Home
-- Discover random
-- ListCharacters
-- GetCharacterDetail
-- ListWorks
-- GetWorkDetail
-- ListCreators
-- GetCreatorDetail
-- ListThemes
-- GetThemeDetail
-- ListSongs
+response:
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": []
+}
+```
 
-## Recommended next step
+## Original admin auth APIs kept
+- `POST /api/v1/admin/auth/login`
+- `GET /api/v1/admin/auth/me`
 
-1. Add admin CRUD routes under `/api/v1/admin`
-2. Add authentication for admin
-3. Add resource upload and media binding
+## Notes
+- This is for fast Vben login integration.
+- Current admin CRUD is still not globally protected by JWT middleware.
+- Next step can add auth middleware to `/api/v1/admin/*`.

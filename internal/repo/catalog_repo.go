@@ -19,4 +19,5 @@ type CatalogRepo interface {
 	GetThemeDetail(slug string) (dto.ThemeDetail, error)
 
 	ListSongs() ([]dto.Song, error)
+	SearchCatalog(keyword string, limit int) (dto.SearchResponseData, error)
 }

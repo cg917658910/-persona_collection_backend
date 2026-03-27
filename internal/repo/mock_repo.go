@@ -3,6 +3,7 @@ package repo
 import (
 	"errors"
 	"math/rand/v2"
+	"strings"
 
 	"pm-backend/internal/dto"
 )
@@ -112,7 +113,7 @@ func (m *mockCatalogRepo) GetCharacterDetail(slug string) (dto.CharacterDetail, 
 				CoreConflict:   "待补充",
 				EmotionalTone:  "待补充",
 				SurfaceTraits:  []string{"待补充"},
-				Timeline:       []string{"待补充"},
+				Timeline:       []dto.CharacterTimelineItem{},
 				RelatedWorks:   m.works,
 				RelatedThemes:  m.themes,
 				RelatedSongs:   filterSongsByCharacter(m.songs, slug),
@@ -166,6 +167,84 @@ func (m *mockCatalogRepo) GetThemeDetail(slug string) (dto.ThemeDetail, error) {
 }
 
 func (m *mockCatalogRepo) ListSongs() ([]dto.Song, error) { return m.songs, nil }
+
+func (m *mockCatalogRepo) SearchCatalog(keyword string, limit int) (dto.SearchResponseData, error) {
+	if limit <= 0 {
+		limit = 8
+	}
+	keyword = strings.TrimSpace(strings.ToLower(keyword))
+	match := func(parts ...string) bool {
+		if keyword == "" {
+			return true
+		}
+		return strings.Contains(strings.ToLower(strings.Join(parts, " ")), keyword)
+	}
+
+	out := dto.SearchResponseData{
+		Characters: make([]dto.CharacterListItemResponse, 0, limit),
+		Works:      make([]dto.WorkListItemResponse, 0, limit),
+		Creators:   make([]dto.CreatorListItemResponse, 0, limit),
+		Themes:     make([]dto.ThemeListItemResponse, 0, limit),
+		Songs:      make([]dto.SongListItemResponse, 0, limit),
+	}
+
+	for _, item := range m.characters {
+		if len(out.Characters) >= limit || !match(item.Name, item.Summary, item.OneLineDefinition) {
+			continue
+		}
+		themeSongTitle := ""
+		if len(item.SongSlugs) > 0 {
+			themeSongTitle = "人物之歌"
+		}
+		out.Characters = append(out.Characters, dto.CharacterListItemResponse{
+			ID: item.Slug, Slug: item.Slug, Name: item.Name, CoverURL: item.CoverURL,
+			Summary: item.Summary, OneLineDefinition: item.OneLineDefinition, CharacterTypeCode: item.CharacterTypeCode,
+			HasSong: len(item.SongSlugs) > 0, ThemeSongTitle: themeSongTitle,
+		})
+	}
+
+	for _, item := range m.works {
+		if len(out.Works) >= limit || !match(item.Title, item.Summary) {
+			continue
+		}
+		out.Works = append(out.Works, dto.WorkListItemResponse{
+			ID: item.Slug, Slug: item.Slug, Title: item.Title, CoverURL: item.CoverURL,
+			Summary: item.Summary, WorkTypeCode: item.TypeCode, CharacterCount: len(item.CharacterSlugs),
+		})
+	}
+
+	for _, item := range m.creators {
+		if len(out.Creators) >= limit || !match(item.Name, item.Summary, item.EraText) {
+			continue
+		}
+		out.Creators = append(out.Creators, dto.CreatorListItemResponse{
+			ID: item.Slug, Slug: item.Slug, Name: item.Name, CoverURL: item.CoverURL,
+			Summary: item.Summary, CreatorTypeCode: item.CreatorTypeCode, EraText: item.EraText, WorkCount: len(item.WorkSlugs),
+		})
+	}
+
+	for _, item := range m.themes {
+		if len(out.Themes) >= limit || !match(item.Name, item.Summary, item.Category) {
+			continue
+		}
+		out.Themes = append(out.Themes, dto.ThemeListItemResponse{
+			ID: item.Slug, Slug: item.Slug, Name: item.Name, CoverURL: item.CoverURL,
+			Summary: item.Summary, Category: item.Category,
+		})
+	}
+
+	for _, item := range m.songs {
+		if len(out.Songs) >= limit || !match(item.Title, item.Summary, item.SongCoreTheme) {
+			continue
+		}
+		out.Songs = append(out.Songs, dto.SongListItemResponse{
+			ID: item.Slug, Slug: item.Slug, Title: item.Title, CharacterSlug: item.CharacterSlug,
+			CoverURL: item.CoverURL, AudioURL: item.AudioURL, Styles: item.Styles,
+		})
+	}
+
+	return out, nil
+}
 
 func filterSongsByCharacter(in []dto.Song, slug string) []dto.Song {
 	out := make([]dto.Song, 0)

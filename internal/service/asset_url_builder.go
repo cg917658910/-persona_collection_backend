@@ -38,3 +38,23 @@ func (b *AssetURLBuilder) Normalize(raw string) string {
 	}
 	return b.publicBaseURL + "/" + clean
 }
+
+func (b *AssetURLBuilder) ToStorage(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	if strings.HasPrefix(raw, b.publicBaseURL+b.staticPrefix+"/assets/") {
+		return strings.TrimPrefix(raw, b.publicBaseURL+b.staticPrefix)
+	}
+	if strings.HasPrefix(raw, b.staticPrefix+"/assets/") {
+		return strings.TrimPrefix(raw, b.staticPrefix)
+	}
+	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
+		return raw
+	}
+	if strings.HasPrefix(raw, "assets/") {
+		return "/" + raw
+	}
+	return raw
+}
