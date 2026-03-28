@@ -290,7 +290,8 @@ SELECT
   t.name_zh AS name,
   COALESCE(t.summary, '') AS summary,
   COALESCE(t.cover_url, '') AS cover_url,
-  COALESCE(t.category, '') AS category
+  COALESCE(t.category, '') AS category,
+  COALESCE(t.subject_type, 'character') AS subject_type
 FROM public.pm_themes t
 WHERE t.is_active = TRUE
 ORDER BY t.sort_order ASC, t.created_at DESC, t.name_zh ASC
@@ -304,7 +305,7 @@ LIMIT $1
 	list := make([]dto.Theme, 0, limit)
 	for rows.Next() {
 		var item dto.Theme
-		if err := rows.Scan(&item.Slug, &item.Name, &item.Summary, &item.CoverURL, &item.Category); err != nil {
+		if err := rows.Scan(&item.Slug, &item.Name, &item.Summary, &item.CoverURL, &item.Category, &item.SubjectType); err != nil {
 			return nil, fmt.Errorf("scan home theme: %w", err)
 		}
 		list = append(list, item)
@@ -398,7 +399,9 @@ SELECT
   COALESCE(c.core_identity, '') AS core_identity,
   COALESCE(c.public_image, '') AS public_image,
   COALESCE(c.hidden_self, '') AS hidden_self,
-  COALESCE((SELECT m.description FROM public.pm_character_motivations cm JOIN public.pm_motivation_dict m ON m.id = cm.motivation_id WHERE cm.character_id = c.id ORDER BY cm.is_primary DESC, cm.weight DESC, cm.created_at ASC LIMIT 1),
+  COALESCE(c.motivation_note,
+           c.meta->>'motivation_note',
+           (SELECT m.description FROM public.pm_character_motivations cm JOIN public.pm_motivation_dict m ON m.id = cm.motivation_id WHERE cm.character_id = c.id ORDER BY cm.is_primary DESC, cm.weight DESC, cm.created_at ASC LIMIT 1),
            c.psychology->>'primary_motivation',
            c.psychology->>'primaryMotivation',
            c.psychology->>'desire',
@@ -660,7 +663,8 @@ SELECT
   t.name_zh AS name,
   COALESCE(t.summary, '') AS summary,
   COALESCE(t.cover_url, '') AS cover_url,
-  COALESCE(t.category, '') AS category
+  COALESCE(t.category, '') AS category,
+  COALESCE(t.subject_type, 'character') AS subject_type
 FROM public.pm_themes t
 WHERE t.is_active = TRUE
 ORDER BY t.sort_order ASC, t.name_zh ASC
@@ -673,7 +677,7 @@ ORDER BY t.sort_order ASC, t.name_zh ASC
 	list := make([]dto.Theme, 0)
 	for rows.Next() {
 		var item dto.Theme
-		if err := rows.Scan(&item.Slug, &item.Name, &item.Summary, &item.CoverURL, &item.Category); err != nil {
+		if err := rows.Scan(&item.Slug, &item.Name, &item.Summary, &item.CoverURL, &item.Category, &item.SubjectType); err != nil {
 			return nil, fmt.Errorf("scan theme: %w", err)
 		}
 		list = append(list, item)
@@ -692,16 +696,26 @@ SELECT
   t.name_zh AS name,
   COALESCE(t.summary, '') AS summary,
   COALESCE(t.cover_url, '') AS cover_url,
-  COALESCE(t.category, '') AS category
+  COALESCE(t.category, '') AS category,
+  COALESCE(t.subject_type, 'character') AS subject_type
 FROM public.pm_themes t
 WHERE t.slug = $1
   AND t.is_active = TRUE
-`, slug).Scan(&d.Slug, &d.Name, &d.Summary, &d.CoverURL, &d.Category)
+`, slug).Scan(&d.Slug, &d.Name, &d.Summary, &d.CoverURL, &d.Category, &d.SubjectType)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return dto.ThemeDetail{}, errors.New("theme not found")
 		}
 		return dto.ThemeDetail{}, fmt.Errorf("get theme detail query: %w", err)
+	}
+
+	if normalizeThemeSubjectType(d.SubjectType) == "relation" {
+		relations, err := r.listRelationsByThemeSlug(ctx, slug)
+		if err != nil {
+			return dto.ThemeDetail{}, err
+		}
+		d.Relationships = relations
+		return d, nil
 	}
 
 	rows, err := r.pool.Query(ctx, `
@@ -938,10 +952,17 @@ SELECT
   COALESCE(t.cover_url, '') AS cover_url,
   COALESCE(t.summary, '') AS summary,
   COALESCE(t.category, '') AS category,
-  COUNT(ct.character_id)::INT AS character_count
+  COALESCE(t.subject_type, 'character') AS subject_type,
+  CASE
+    WHEN COALESCE(t.subject_type, 'character') = 'relation'
+      THEN COUNT(DISTINCT rt.relation_slug)::INT
+    ELSE COUNT(DISTINCT ct.character_id)::INT
+  END AS character_count
 FROM public.pm_themes t
 LEFT JOIN public.pm_character_themes ct ON ct.theme_id = t.id
 LEFT JOIN public.pm_characters c ON c.id = ct.character_id AND c.is_active = TRUE AND c.status = 'published'
+LEFT JOIN public.pm_relation_themes rt ON rt.theme_slug = t.slug
+LEFT JOIN public.pm_relations r ON r.slug = rt.relation_slug AND r.is_active = TRUE AND r.status = 'published'
 WHERE t.is_active = TRUE
   AND (
     $1 = ''
@@ -960,9 +981,10 @@ LIMIT $2
 
 	for themeRows.Next() {
 		var item dto.ThemeListItemResponse
-		if err := themeRows.Scan(&item.ID, &item.Slug, &item.Name, &item.CoverURL, &item.Summary, &item.Category, &item.CharacterCount); err != nil {
+		if err := themeRows.Scan(&item.ID, &item.Slug, &item.Name, &item.CoverURL, &item.Summary, &item.Category, &item.SubjectType, &item.CharacterCount); err != nil {
 			return dto.SearchResponseData{}, fmt.Errorf("scan search theme: %w", err)
 		}
+		item.ItemCount = item.CharacterCount
 		out.Themes = append(out.Themes, item)
 	}
 	if err := themeRows.Err(); err != nil {
@@ -1053,7 +1075,8 @@ SELECT
   t.name_zh AS name,
   COALESCE(t.summary, '') AS summary,
   COALESCE(t.cover_url, '') AS cover_url,
-  COALESCE(t.category, '') AS category
+  COALESCE(t.category, '') AS category,
+  COALESCE(t.subject_type, 'character') AS subject_type
 FROM public.pm_character_themes x
 JOIN public.pm_themes t ON t.id = x.theme_id
 JOIN public.pm_characters c ON c.id = x.character_id
@@ -1069,7 +1092,7 @@ ORDER BY x.is_primary DESC, x.weight DESC, t.sort_order ASC, t.name_zh ASC
 	list := make([]dto.Theme, 0)
 	for rows.Next() {
 		var item dto.Theme
-		if err := rows.Scan(&item.Slug, &item.Name, &item.Summary, &item.CoverURL, &item.Category); err != nil {
+		if err := rows.Scan(&item.Slug, &item.Name, &item.Summary, &item.CoverURL, &item.Category, &item.SubjectType); err != nil {
 			return nil, err
 		}
 		list = append(list, item)

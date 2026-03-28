@@ -4,11 +4,13 @@ type PageQuery struct {
 	Page              int    `form:"page"`
 	PageSize          int    `form:"pageSize"`
 	Keyword           string `form:"keyword"`
+	SubjectType       string `form:"subjectType"`
 	CharacterTypeCode string `form:"characterTypeCode"`
 	Status            string `form:"status"`
 	Category          string `form:"category"`
 	WorkTypeCode      string `form:"workTypeCode"`
 	CreatorTypeCode   string `form:"creatorTypeCode"`
+	RelationTypeCode  string `form:"relationTypeCode"`
 }
 
 type PageResult[T any] struct {

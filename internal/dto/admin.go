@@ -14,6 +14,7 @@ type AdminCharacter struct {
 	CulturalRegionCode   string            `json:"culturalRegionCode,omitempty"`
 	OneLineDefinition    string            `json:"oneLineDefinition"`
 	CoreIdentity         string            `json:"coreIdentity"`
+	MotivationNote       string            `json:"motivationNote,omitempty"`
 	CoreFear             string            `json:"coreFear"`
 	CoreConflict         string            `json:"coreConflict"`
 	EmotionalTone        string            `json:"emotionalTone"`
@@ -69,10 +70,12 @@ type AdminTheme struct {
 	Slug           string   `json:"slug"`
 	Name           string   `json:"name"`
 	Code           string   `json:"code"`
+	SubjectType    string   `json:"subjectType,omitempty"`
 	Category       string   `json:"category"`
 	Summary        string   `json:"summary"`
 	CoverURL       string   `json:"coverUrl"`
 	Status         string   `json:"status"`
 	CharacterSlugs []string `json:"characterSlugs,omitempty"`
+	RelationSlugs  []string `json:"relationSlugs,omitempty"`
 	SortOrder      int      `json:"sortOrder"`
 }

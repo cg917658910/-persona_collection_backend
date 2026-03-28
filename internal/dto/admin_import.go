@@ -5,11 +5,17 @@ type AdminImportRequest struct {
 }
 
 type AdminImportSummary struct {
-	Themes     int `json:"themes"`
-	Creators   int `json:"creators"`
-	Works      int `json:"works"`
-	Characters int `json:"characters"`
-	Songs      int `json:"songs"`
+	Themes               int `json:"themes"`
+	Creators             int `json:"creators"`
+	Works                int `json:"works"`
+	Characters           int `json:"characters"`
+	Songs                int `json:"songs"`
+	Relations            int `json:"relations,omitempty"`
+	RelationParticipants int `json:"relationParticipants,omitempty"`
+	RelationEvents       int `json:"relationEvents,omitempty"`
+	RelationSongs        int `json:"relationSongs,omitempty"`
+	RelationThemes       int `json:"relationThemes,omitempty"`
+	RelationLinks        int `json:"relationLinks,omitempty"`
 }
 
 type AdminImportResult struct {

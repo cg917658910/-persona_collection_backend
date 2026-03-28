@@ -8,6 +8,9 @@ type AdminCharacterPageRepo interface {
 type AdminSongPageRepo interface {
 	PageAdminSongs(q dto.PageQuery) (dto.PageResult[dto.AdminSong], error)
 }
+type AdminRelationPageRepo interface {
+	PageAdminRelations(q dto.PageQuery) (dto.PageResult[dto.AdminRelation], error)
+}
 type AdminThemePageRepo interface {
 	PageAdminThemes(q dto.PageQuery) (dto.PageResult[dto.AdminTheme], error)
 }

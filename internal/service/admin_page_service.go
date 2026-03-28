@@ -79,6 +79,29 @@ func (s *AdminPageService) Songs(q dto.PageQuery) (dto.PageResult[dto.AdminSong]
 	}
 	return paginateSlice(filtered, q.Page, q.PageSize), nil
 }
+func (s *AdminPageService) Relations(q dto.PageQuery) (dto.PageResult[dto.AdminRelation], error) {
+	if r, ok := s.repo.(repo.AdminRelationPageRepo); ok {
+		return r.PageAdminRelations(q)
+	}
+	list, err := s.repo.ListAdminRelations()
+	if err != nil {
+		return dto.PageResult[dto.AdminRelation]{}, err
+	}
+	filtered := make([]dto.AdminRelation, 0)
+	for _, item := range list {
+		if !containsKeyword(item.Name+item.Slug+item.Summary+item.OneLineDefinition+item.SourceCharacterName+item.TargetCharacterName+item.RelationTypeCode, q.Keyword) {
+			continue
+		}
+		if q.RelationTypeCode != "" && item.RelationTypeCode != q.RelationTypeCode {
+			continue
+		}
+		if q.Status != "" && item.Status != q.Status {
+			continue
+		}
+		filtered = append(filtered, item)
+	}
+	return paginateSlice(filtered, q.Page, q.PageSize), nil
+}
 func (s *AdminPageService) Themes(q dto.PageQuery) (dto.PageResult[dto.AdminTheme], error) {
 	if r, ok := s.repo.(repo.AdminThemePageRepo); ok {
 		return r.PageAdminThemes(q)
@@ -153,7 +176,9 @@ func (s *AdminPageService) Dicts(dictKey string, page, pageSize int, keyword str
 		return r.PageAdminDictItems(dictKey, page, pageSize, keyword)
 	}
 	list, err := s.repo.ListAdminDictItems(dictKey)
-	if err != nil { return dto.PageResult[dto.AdminDictItem]{}, err }
+	if err != nil {
+		return dto.PageResult[dto.AdminDictItem]{}, err
+	}
 	filtered := make([]dto.AdminDictItem, 0)
 	for _, item := range list {
 		if containsKeyword(item.Name+item.Code, keyword) {

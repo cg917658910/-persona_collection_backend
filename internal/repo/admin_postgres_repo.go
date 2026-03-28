@@ -27,18 +27,19 @@ func (r *postgresAdminRepo) ListAdminCharacters() ([]dto.AdminCharacter, error) 
 	defer cancel()
 
 	rows, err := r.pool.Query(ctx, `
-SELECT
-  c.id::text,
-  c.slug,
-  c.name,
+  SELECT
+    c.id::text,
+    c.slug,
+    c.name,
   COALESCE(c.summary, '') AS summary,
   COALESCE(c.cover_url, '') AS cover_url,
   c.status,
   COALESCE(ct.name_zh, ct.code) AS type_name,
-  ct.code AS character_type_code,
-  COALESCE(c.one_line_definition, '') AS one_line_definition,
-  COALESCE(c.core_identity, '') AS core_identity,
-  COALESCE(c.core_fear, '') AS core_fear,
+    ct.code AS character_type_code,
+    COALESCE(c.one_line_definition, '') AS one_line_definition,
+    COALESCE(c.core_identity, '') AS core_identity,
+    COALESCE(c.motivation_note, '') AS motivation_note,
+    COALESCE(c.core_fear, '') AS core_fear,
   COALESCE(c.core_conflict, '') AS core_conflict,
   COALESCE(c.emotional_tone, '') AS emotional_tone,
   COALESCE(c.emotional_temperature, '') AS emotional_temperature,
@@ -111,18 +112,19 @@ func (r *postgresAdminRepo) GetAdminCharacter(ref string) (dto.AdminCharacter, e
 	defer cancel()
 
 	rows, err := r.pool.Query(ctx, `
-SELECT
-  c.id::text,
-  c.slug,
+  SELECT
+    c.id::text,
+    c.slug,
   c.name,
   COALESCE(c.summary, '') AS summary,
   COALESCE(c.cover_url, '') AS cover_url,
   c.status,
   COALESCE(ct.name_zh, ct.code) AS type_name,
-  ct.code AS character_type_code,
-  COALESCE(c.one_line_definition, '') AS one_line_definition,
-  COALESCE(c.core_identity, '') AS core_identity,
-  COALESCE(c.core_fear, '') AS core_fear,
+    ct.code AS character_type_code,
+    COALESCE(c.one_line_definition, '') AS one_line_definition,
+    COALESCE(c.core_identity, '') AS core_identity,
+    COALESCE(c.motivation_note, '') AS motivation_note,
+    COALESCE(c.core_fear, '') AS core_fear,
   COALESCE(c.core_conflict, '') AS core_conflict,
   COALESCE(c.emotional_tone, '') AS emotional_tone,
   COALESCE(c.emotional_temperature, '') AS emotional_temperature,
@@ -218,18 +220,18 @@ func (r *postgresAdminRepo) CreateAdminCharacter(in dto.AdminCharacter) (dto.Adm
 
 	var id string
 	err = tx.QueryRow(ctx, `
-INSERT INTO public.pm_characters (
-  character_type_id, name, slug, aliases, gender, region_id, cultural_region_id, summary, cover_url,
-  one_line_definition, core_identity, core_fear, core_conflict, emotional_tone, emotional_temperature,
-  dominant_emotions, suppressed_emotions, values_tags, symbolic_images, elements,
-  relationship_profile, timeline, meta, sort_order, status, is_active
-) VALUES (
-  $1,$2,$3,COALESCE($4, ARRAY[]::text[]),NULLIF($5,''),$6,$7,$8,$9,
-  $10,$11,$12,$13,$14,NULLIF($15,''),COALESCE($16, ARRAY[]::text[]),COALESCE($17, ARRAY[]::text[]),COALESCE($18, ARRAY[]::text[]),COALESCE($19, ARRAY[]::text[]),COALESCE($20, ARRAY[]::text[]),
-  COALESCE($21::jsonb,'{}'::jsonb),COALESCE($22::jsonb,'[]'::jsonb),COALESCE($23::jsonb,'{}'::jsonb),COALESCE($24,0),$25,$26
-) RETURNING id::text
-`, charTypeID, in.Name, in.Slug, []string{}, emptyToNil(in.Gender), regionID, culturalID, in.Summary, in.CoverURL,
-		in.OneLineDefinition, in.CoreIdentity, in.CoreFear, in.CoreConflict, in.EmotionalTone, emptyToNil(in.EmotionalTemperature),
+  INSERT INTO public.pm_characters (
+    character_type_id, name, slug, aliases, gender, region_id, cultural_region_id, summary, cover_url,
+    one_line_definition, core_identity, motivation_note, core_fear, core_conflict, emotional_tone, emotional_temperature,
+    dominant_emotions, suppressed_emotions, values_tags, symbolic_images, elements,
+    relationship_profile, timeline, meta, sort_order, status, is_active
+  ) VALUES (
+    $1,$2,$3,COALESCE($4, ARRAY[]::text[]),NULLIF($5,''),$6,$7,$8,$9,
+    $10,$11,NULLIF($12,''),$13,$14,$15,NULLIF($16,''),COALESCE($17, ARRAY[]::text[]),COALESCE($18, ARRAY[]::text[]),COALESCE($19, ARRAY[]::text[]),COALESCE($20, ARRAY[]::text[]),COALESCE($21, ARRAY[]::text[]),
+    COALESCE($22::jsonb,'{}'::jsonb),COALESCE($23::jsonb,'[]'::jsonb),COALESCE($24::jsonb,'{}'::jsonb),COALESCE($25,0),$26,$27
+  ) RETURNING id::text
+  `, charTypeID, in.Name, in.Slug, []string{}, emptyToNil(in.Gender), regionID, culturalID, in.Summary, in.CoverURL,
+		in.OneLineDefinition, in.CoreIdentity, emptyToNil(in.MotivationNote), in.CoreFear, in.CoreConflict, in.EmotionalTone, emptyToNil(in.EmotionalTemperature),
 		in.DominantEmotions, in.SuppressedEmotions, in.ValuesTags, in.SymbolicImages, in.Elements,
 		string(relJSON), string(timelineJSON), string(metaJSON), in.SortOrder, status, isPublishedStatus(status),
 	).Scan(&id)
@@ -282,36 +284,37 @@ func (r *postgresAdminRepo) UpdateAdminCharacter(ref string, in dto.AdminCharact
 	status := normalizeAdminStatus(in.Status, "draft")
 
 	_, err = tx.Exec(ctx, `
-UPDATE public.pm_characters
-SET character_type_id=$2,
-    name=$3,
+  UPDATE public.pm_characters
+  SET character_type_id=$2,
+      name=$3,
     slug=$4,
     gender=NULLIF($5,''),
     region_id=$6,
     cultural_region_id=$7,
-    summary=$8,
-    cover_url=$9,
-    one_line_definition=$10,
-    core_identity=$11,
-    core_fear=$12,
-    core_conflict=$13,
-    emotional_tone=$14,
-    emotional_temperature=NULLIF($15,''),
-    dominant_emotions=COALESCE($16, ARRAY[]::text[]),
-    suppressed_emotions=COALESCE($17, ARRAY[]::text[]),
-    values_tags=COALESCE($18, ARRAY[]::text[]),
-    symbolic_images=COALESCE($19, ARRAY[]::text[]),
-    elements=COALESCE($20, ARRAY[]::text[]),
-    sort_order=COALESCE($21, pm_characters.sort_order),
-    relationship_profile=COALESCE($22::jsonb,'{}'::jsonb),
-    timeline=COALESCE($23::jsonb,'[]'::jsonb),
-    meta=COALESCE(pm_characters.meta, '{}'::jsonb) || COALESCE($24::jsonb,'{}'::jsonb),
-    status=$25,
-    is_active=$26,
-    updated_at=NOW()
-WHERE id=$1
-`, charID, charTypeID, in.Name, in.Slug, emptyToNil(in.Gender), regionID, culturalID, in.Summary, in.CoverURL,
-		in.OneLineDefinition, in.CoreIdentity, in.CoreFear, in.CoreConflict, in.EmotionalTone, emptyToNil(in.EmotionalTemperature),
+      summary=$8,
+      cover_url=$9,
+      one_line_definition=$10,
+      core_identity=$11,
+      motivation_note=NULLIF($12,''),
+      core_fear=$13,
+      core_conflict=$14,
+      emotional_tone=$15,
+      emotional_temperature=NULLIF($16,''),
+      dominant_emotions=COALESCE($17, ARRAY[]::text[]),
+      suppressed_emotions=COALESCE($18, ARRAY[]::text[]),
+      values_tags=COALESCE($19, ARRAY[]::text[]),
+      symbolic_images=COALESCE($20, ARRAY[]::text[]),
+      elements=COALESCE($21, ARRAY[]::text[]),
+      sort_order=COALESCE($22, pm_characters.sort_order),
+      relationship_profile=COALESCE($23::jsonb,'{}'::jsonb),
+      timeline=COALESCE($24::jsonb,'[]'::jsonb),
+      meta=COALESCE(pm_characters.meta, '{}'::jsonb) || COALESCE($25::jsonb,'{}'::jsonb),
+      status=$26,
+      is_active=$27,
+      updated_at=NOW()
+  WHERE id=$1
+  `, charID, charTypeID, in.Name, in.Slug, emptyToNil(in.Gender), regionID, culturalID, in.Summary, in.CoverURL,
+		in.OneLineDefinition, in.CoreIdentity, emptyToNil(in.MotivationNote), in.CoreFear, in.CoreConflict, in.EmotionalTone, emptyToNil(in.EmotionalTemperature),
 		in.DominantEmotions, in.SuppressedEmotions, in.ValuesTags, in.SymbolicImages, in.Elements,
 		in.SortOrder, string(relJSON), string(timelineJSON), string(metaJSON), status, isPublishedStatus(status))
 	if err != nil {
@@ -459,11 +462,16 @@ func (r *postgresAdminRepo) ListAdminThemes() ([]dto.AdminTheme, error) {
 	defer cancel()
 	rows, err := r.pool.Query(ctx, `
 SELECT t.id::text, t.slug, t.name_zh, t.code, t.category, COALESCE(t.summary,''), COALESCE(t.cover_url,''), COALESCE(t.sort_order,0),
+       COALESCE(t.subject_type, 'character') AS subject_type,
        CASE WHEN t.is_active THEN 'published' ELSE 'archived' END AS status,
        COALESCE((SELECT array_agg(c.slug ORDER BY x.is_primary DESC, x.weight DESC, c.name ASC)
                  FROM public.pm_character_themes x
                  JOIN public.pm_characters c ON c.id = x.character_id
-                 WHERE x.theme_id = t.id AND c.is_active = TRUE), ARRAY[]::text[]) AS character_slugs
+                 WHERE x.theme_id = t.id AND c.is_active = TRUE), ARRAY[]::text[]) AS character_slugs,
+       COALESCE((SELECT array_agg(r.slug ORDER BY x.is_primary DESC, x.sort_order ASC, r.slug ASC)
+                 FROM public.pm_relation_themes x
+                 JOIN public.pm_relations r ON r.slug = x.relation_slug
+                 WHERE x.theme_slug = t.slug AND r.is_active = TRUE), ARRAY[]::text[]) AS relation_slugs
 FROM public.pm_themes t
 ORDER BY t.sort_order ASC, t.updated_at DESC, t.name_zh ASC
 `)
@@ -474,7 +482,7 @@ ORDER BY t.sort_order ASC, t.updated_at DESC, t.name_zh ASC
 	list := make([]dto.AdminTheme, 0)
 	for rows.Next() {
 		var item dto.AdminTheme
-		if err := rows.Scan(&item.ID, &item.Slug, &item.Name, &item.Code, &item.Category, &item.Summary, &item.CoverURL, &item.SortOrder, &item.Status, &item.CharacterSlugs); err != nil {
+		if err := rows.Scan(&item.ID, &item.Slug, &item.Name, &item.Code, &item.Category, &item.Summary, &item.CoverURL, &item.SortOrder, &item.SubjectType, &item.Status, &item.CharacterSlugs, &item.RelationSlugs); err != nil {
 			return nil, fmt.Errorf("scan admin theme: %w", err)
 		}
 		list = append(list, item)
@@ -487,15 +495,20 @@ func (r *postgresAdminRepo) GetAdminTheme(ref string) (dto.AdminTheme, error) {
 	var item dto.AdminTheme
 	err := r.pool.QueryRow(ctx, `
 SELECT t.id::text, t.slug, t.name_zh, t.code, t.category, COALESCE(t.summary,''), COALESCE(t.cover_url,''), COALESCE(t.sort_order,0),
+       COALESCE(t.subject_type, 'character') AS subject_type,
        CASE WHEN t.is_active THEN 'published' ELSE 'archived' END AS status,
        COALESCE((SELECT array_agg(c.slug ORDER BY x.is_primary DESC, x.weight DESC, c.name ASC)
                  FROM public.pm_character_themes x
                  JOIN public.pm_characters c ON c.id = x.character_id
-                 WHERE x.theme_id = t.id AND c.is_active = TRUE), ARRAY[]::text[]) AS character_slugs
+                 WHERE x.theme_id = t.id AND c.is_active = TRUE), ARRAY[]::text[]) AS character_slugs,
+       COALESCE((SELECT array_agg(r.slug ORDER BY x.is_primary DESC, x.sort_order ASC, r.slug ASC)
+                 FROM public.pm_relation_themes x
+                 JOIN public.pm_relations r ON r.slug = x.relation_slug
+                 WHERE x.theme_slug = t.slug AND r.is_active = TRUE), ARRAY[]::text[]) AS relation_slugs
 FROM public.pm_themes t
 WHERE t.id::text=$1 OR t.slug=$1
 LIMIT 1
-`, ref).Scan(&item.ID, &item.Slug, &item.Name, &item.Code, &item.Category, &item.Summary, &item.CoverURL, &item.SortOrder, &item.Status, &item.CharacterSlugs)
+`, ref).Scan(&item.ID, &item.Slug, &item.Name, &item.Code, &item.Category, &item.Summary, &item.CoverURL, &item.SortOrder, &item.SubjectType, &item.Status, &item.CharacterSlugs, &item.RelationSlugs)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return dto.AdminTheme{}, errors.New("admin theme not found")
@@ -515,16 +528,20 @@ func (r *postgresAdminRepo) CreateAdminTheme(in dto.AdminTheme) (dto.AdminTheme,
 
 	var id string
 	isActive := isPublishedStatus(in.Status)
+	subjectType := normalizeThemeSubjectType(in.SubjectType)
 	err = tx.QueryRow(ctx, `
-INSERT INTO public.pm_themes (code, slug, name_zh, category, summary, cover_url, sort_order, is_active)
-VALUES ($1,$2,$3,COALESCE(NULLIF($4,''),'general'),$5,$6,COALESCE($7,0),$8)
+INSERT INTO public.pm_themes (code, slug, name_zh, subject_type, category, summary, cover_url, sort_order, is_active)
+VALUES ($1,$2,$3,$4,COALESCE(NULLIF($5,''),'general'),$6,$7,COALESCE($8,0),$9)
 RETURNING id::text
-`, in.Code, in.Slug, in.Name, emptyToNil(in.Category), in.Summary, in.CoverURL, in.SortOrder, isActive).Scan(&id)
+`, in.Code, in.Slug, in.Name, subjectType, emptyToNil(in.Category), in.Summary, in.CoverURL, in.SortOrder, isActive).Scan(&id)
 	if err != nil {
 		return dto.AdminTheme{}, fmt.Errorf("insert theme: %w", err)
 	}
 
-	if err := replaceThemeCharacters(ctx, tx, id, in.CharacterSlugs); err != nil {
+	if err := replaceThemeCharacters(ctx, tx, id, themeCharacterSlugs(subjectType, in.CharacterSlugs)); err != nil {
+		return dto.AdminTheme{}, err
+	}
+	if err := replaceThemeRelations(ctx, tx, in.Slug, in.Slug, themeRelationSlugs(subjectType, in.RelationSlugs)); err != nil {
 		return dto.AdminTheme{}, err
 	}
 
@@ -546,17 +563,25 @@ func (r *postgresAdminRepo) UpdateAdminTheme(ref string, in dto.AdminTheme) (dto
 	if err != nil {
 		return dto.AdminTheme{}, err
 	}
+	var existingSlug string
+	if err := tx.QueryRow(ctx, `SELECT slug FROM public.pm_themes WHERE id = $1`, themeID).Scan(&existingSlug); err != nil {
+		return dto.AdminTheme{}, err
+	}
+	subjectType := normalizeThemeSubjectType(in.SubjectType)
 
 	_, err = tx.Exec(ctx, `
 UPDATE public.pm_themes
-SET code=$2, slug=$3, name_zh=$4, category=COALESCE(NULLIF($5,''),category), summary=$6, cover_url=$7, sort_order=COALESCE($8, pm_themes.sort_order), is_active=$9, updated_at=NOW()
+SET code=$2, slug=$3, name_zh=$4, subject_type=$5, category=COALESCE(NULLIF($6,''),category), summary=$7, cover_url=$8, sort_order=COALESCE($9, pm_themes.sort_order), is_active=$10, updated_at=NOW()
 WHERE id=$1
-`, themeID, in.Code, in.Slug, in.Name, emptyToNil(in.Category), in.Summary, in.CoverURL, in.SortOrder, isPublishedStatus(in.Status))
+`, themeID, in.Code, in.Slug, in.Name, subjectType, emptyToNil(in.Category), in.Summary, in.CoverURL, in.SortOrder, isPublishedStatus(in.Status))
 	if err != nil {
 		return dto.AdminTheme{}, fmt.Errorf("update theme: %w", err)
 	}
 
-	if err := replaceThemeCharacters(ctx, tx, themeID, in.CharacterSlugs); err != nil {
+	if err := replaceThemeCharacters(ctx, tx, themeID, themeCharacterSlugs(subjectType, in.CharacterSlugs)); err != nil {
+		return dto.AdminTheme{}, err
+	}
+	if err := replaceThemeRelations(ctx, tx, existingSlug, in.Slug, themeRelationSlugs(subjectType, in.RelationSlugs)); err != nil {
 		return dto.AdminTheme{}, err
 	}
 
@@ -583,7 +608,7 @@ func scanAdminCharacter(rows pgx.Rows) (dto.AdminCharacter, error) {
 	var relJSON, timelineJSON, metaJSON string
 	if err := rows.Scan(
 		&item.ID, &item.Slug, &item.Name, &item.Summary, &item.CoverURL, &item.Status,
-		&item.Type, &item.CharacterTypeCode, &item.OneLineDefinition, &item.CoreIdentity, &item.CoreFear, &item.CoreConflict,
+		&item.Type, &item.CharacterTypeCode, &item.OneLineDefinition, &item.CoreIdentity, &item.MotivationNote, &item.CoreFear, &item.CoreConflict,
 		&item.EmotionalTone, &item.EmotionalTemperature, &item.Gender, &item.RegionCode, &item.CulturalRegionCode,
 		&item.DominantEmotions, &item.SuppressedEmotions, &item.ValuesTags, &item.SymbolicImages, &item.Elements, &item.SortOrder,
 		&relJSON, &timelineJSON, &metaJSON, &item.WorkSlugs, &item.WorkNames, &item.ThemeSlugs, &item.ThemeNames, &item.SongSlugs, &item.HasSong,
@@ -596,6 +621,11 @@ func scanAdminCharacter(rows pgx.Rows) (dto.AdminCharacter, error) {
 	if err := json.Unmarshal([]byte(metaJSON), &meta); err == nil {
 		if v, ok := meta["primary_motivation"].(string); ok {
 			item.PrimaryMotivation = v
+		}
+		if item.MotivationNote == "" {
+			if v, ok := meta["motivation_note"].(string); ok {
+				item.MotivationNote = strings.TrimSpace(v)
+			}
 		}
 		item.HomeToday = adminMetaBool(meta, "home_today")
 		item.FeaturedHome = adminMetaBool(meta, "is_featured_home")
@@ -663,6 +693,53 @@ func replaceThemeCharacters(ctx context.Context, tx pgx.Tx, themeID string, char
 		}
 	}
 	return nil
+}
+
+func replaceThemeRelations(ctx context.Context, tx pgx.Tx, currentThemeSlug, nextThemeSlug string, relationSlugs []string) error {
+	currentThemeSlug = strings.TrimSpace(currentThemeSlug)
+	nextThemeSlug = strings.TrimSpace(nextThemeSlug)
+	if currentThemeSlug == "" && nextThemeSlug == "" {
+		return nil
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM public.pm_relation_themes WHERE theme_slug = $1 OR theme_slug = $2`, currentThemeSlug, nextThemeSlug); err != nil {
+		return err
+	}
+	if nextThemeSlug == "" {
+		return nil
+	}
+	for idx, slug := range uniq(relationSlugs) {
+		relationSlug := strings.TrimSpace(slug)
+		if relationSlug == "" {
+			continue
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO public.pm_relation_themes (relation_slug, theme_slug, is_primary, sort_order) VALUES ($1,$2,$3,$4)`, relationSlug, nextThemeSlug, idx == 0, idx); err != nil {
+			return fmt.Errorf("insert relation theme %s: %w", relationSlug, err)
+		}
+	}
+	return nil
+}
+
+func normalizeThemeSubjectType(subjectType string) string {
+	switch strings.ToLower(strings.TrimSpace(subjectType)) {
+	case "relation":
+		return "relation"
+	default:
+		return "character"
+	}
+}
+
+func themeCharacterSlugs(subjectType string, slugs []string) []string {
+	if normalizeThemeSubjectType(subjectType) != "character" {
+		return []string{}
+	}
+	return slugs
+}
+
+func themeRelationSlugs(subjectType string, slugs []string) []string {
+	if normalizeThemeSubjectType(subjectType) != "relation" {
+		return []string{}
+	}
+	return slugs
 }
 func lookupIDByCode(ctx context.Context, q interface {
 	QueryRow(context.Context, string, ...any) pgx.Row
@@ -751,6 +828,7 @@ func uniq(in []string) []string {
 func buildAdminCharacterMeta(in dto.AdminCharacter) map[string]any {
 	return map[string]any{
 		"primary_motivation": in.PrimaryMotivation,
+		"motivation_note":    in.MotivationNote,
 		"home_today":         in.HomeToday,
 		"is_featured_home":   in.FeaturedHome,
 		"home_sort":          in.HomeSort,

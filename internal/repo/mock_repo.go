@@ -9,49 +9,182 @@ import (
 )
 
 type mockCatalogRepo struct {
-	characters []dto.Character
-	works      []dto.Work
-	creators   []dto.Creator
-	themes     []dto.Theme
-	songs      []dto.Song
+	characters    []dto.Character
+	relationships []dto.RelationRecord
+	works         []dto.Work
+	creators      []dto.Creator
+	themes        []dto.Theme
+	songs         []dto.Song
 }
 
 func NewMockCatalogRepo() CatalogRepo {
 	works := []dto.Work{
-		{Slug: "dream-of-the-red-chamber", Title: "红楼梦", Summary: "家族盛衰与真情消逝。", CoverURL: "/assets/images/works/dream-of-the-red-chamber.webp", TypeCode: "novel"},
-		{Slug: "journey-to-the-west", Title: "西游记", Summary: "神魔冒险与修行之路。", CoverURL: "/assets/images/works/journey-to-the-west.webp", TypeCode: "novel"},
-	}
-	creators := []dto.Creator{
-		{Slug: "cao-xueqin", Name: "曹雪芹", Summary: "中国古典文学作家。", CoverURL: "/assets/images/creators/cao-xueqin.webp"},
-		{Slug: "wu-chengen", Name: "吴承恩", Summary: "中国古典文学作家。", CoverURL: "/assets/images/creators/wu-chengen.webp"},
-	}
-	themes := []dto.Theme{
-		{Slug: "tragic", Name: "悲剧人格", Summary: "内在真实与命运难以相容。", CoverURL: "/assets/images/themes/tragic.webp"},
-		{Slug: "rebels", Name: "反叛者", Summary: "拒绝被不合理秩序驯服。", CoverURL: "/assets/images/themes/rebels.webp"},
-	}
-	songs := []dto.Song{
-		{Slug: "lin-daiyu-theme-v1", Title: "林黛玉之歌", CharacterSlug: "lin-daiyu", CoverURL: "/assets/images/songs/lin-daiyu-theme-v1.webp", AudioURL: "/assets/audio/lin-daiyu-theme-v1.mp3", Styles: []string{"国风", "抒情"}},
-		{Slug: "sun-wu-kong-theme-v1", Title: "孙悟空之歌", CharacterSlug: "sun-wu-kong", CoverURL: "/assets/images/songs/sun-wu-kong-theme-v1.webp", AudioURL: "/assets/audio/sun-wu-kong-theme-v1.mp3", Styles: []string{"摇滚", "热血"}},
-	}
-	characters := []dto.Character{
 		{
-			Slug: "lin-daiyu", Name: "林黛玉", CharacterTypeCode: "literary",
-			Summary: "高敏感、高自尊的真情承受者。", OneLineDefinition: "她不是脆弱，而是过度敏感、过度清醒、又过度珍视真情的人。",
-			CoverURL: "/assets/images/characters/lin-daiyu.webp", ThemeSlugs: []string{"tragic"}, WorkSlugs: []string{"dream-of-the-red-chamber"}, SongSlugs: []string{"lin-daiyu-theme-v1"},
+			Slug:     "dream-of-the-red-chamber",
+			Title:    "Dream of the Red Chamber",
+			Summary:  "A novel about family decline and fragile feeling.",
+			CoverURL: "/assets/images/works/dream-of-the-red-chamber.webp",
+			TypeCode: "novel",
 		},
 		{
-			Slug: "sun-wu-kong", Name: "孙悟空", CharacterTypeCode: "literary",
-			Summary: "不愿被驯服的自由反抗者。", OneLineDefinition: "他不是不守规矩，而是不愿被不合理的规矩困住。",
-			CoverURL: "/assets/images/characters/sun-wu-kong.webp", ThemeSlugs: []string{"rebels"}, WorkSlugs: []string{"journey-to-the-west"}, SongSlugs: []string{"sun-wu-kong-theme-v1"},
+			Slug:     "journey-to-the-west",
+			Title:    "Journey to the West",
+			Summary:  "A mythic pilgrimage shaped by rebellion and discipline.",
+			CoverURL: "/assets/images/works/journey-to-the-west.webp",
+			TypeCode: "novel",
+		},
+	}
+
+	creators := []dto.Creator{
+		{
+			Slug:     "cao-xueqin",
+			Name:     "Cao Xueqin",
+			Summary:  "A classic Chinese novelist.",
+			CoverURL: "/assets/images/creators/cao-xueqin.webp",
+		},
+		{
+			Slug:     "wu-chengen",
+			Name:     "Wu Chengen",
+			Summary:  "A classic Chinese novelist.",
+			CoverURL: "/assets/images/creators/wu-chengen.webp",
+		},
+	}
+
+	themes := []dto.Theme{
+		{
+			Slug:     "tragic",
+			Name:     "Tragic Temperament",
+			Summary:  "Characters who cannot live lightly with truth and feeling.",
+			CoverURL: "/assets/images/themes/tragic.webp",
+		},
+		{
+			Slug:     "rebels",
+			Name:     "Rebels",
+			Summary:  "Characters who reject unreasonable order.",
+			CoverURL: "/assets/images/themes/rebels.webp",
+		},
+	}
+
+	songs := []dto.Song{
+		{
+			Slug:          "lin-daiyu-theme-v1",
+			Title:         "Lin Daiyu Theme",
+			CharacterSlug: "lin-daiyu",
+			CoverURL:      "/assets/images/songs/lin-daiyu-theme-v1.webp",
+			AudioURL:      "/assets/audio/lin-daiyu-theme-v1.mp3",
+			Styles:        []string{"guofeng", "lyrical"},
+		},
+		{
+			Slug:          "sun-wu-kong-theme-v1",
+			Title:         "Sun Wukong Theme",
+			CharacterSlug: "sun-wu-kong",
+			CoverURL:      "/assets/images/songs/sun-wu-kong-theme-v1.webp",
+			AudioURL:      "/assets/audio/sun-wu-kong-theme-v1.mp3",
+			Styles:        []string{"rock", "energetic"},
+		},
+	}
+
+	characters := []dto.Character{
+		{
+			Slug:              "lin-daiyu",
+			Name:              "Lin Daiyu",
+			CharacterTypeCode: "literary",
+			Summary:           "A character of sensitivity, dignity, and emotional lucidity.",
+			OneLineDefinition: "She is not weak; she is too sensitive and too honest to live numbly.",
+			CoverURL:          "/assets/images/characters/lin-daiyu.webp",
+			ThemeSlugs:        []string{"tragic"},
+			WorkSlugs:         []string{"dream-of-the-red-chamber"},
+			SongSlugs:         []string{"lin-daiyu-theme-v1"},
+			SurfaceTraits:     []string{"sensitive", "lucid"},
+			PrimaryWorkTitle:  "Dream of the Red Chamber",
+			PrimaryThemeName:  "Tragic Temperament",
+			PrimarySongTitle:  "Lin Daiyu Theme",
+		},
+		{
+			Slug:              "sun-wu-kong",
+			Name:              "Sun Wukong",
+			CharacterTypeCode: "literary",
+			Summary:           "A figure of freedom who refuses submission to absurd order.",
+			OneLineDefinition: "He does not resist rules in general; he resists rules that should never rule him.",
+			CoverURL:          "/assets/images/characters/sun-wu-kong.webp",
+			ThemeSlugs:        []string{"rebels"},
+			WorkSlugs:         []string{"journey-to-the-west"},
+			SongSlugs:         []string{"sun-wu-kong-theme-v1"},
+			SurfaceTraits:     []string{"defiant", "free"},
+			PrimaryWorkTitle:  "Journey to the West",
+			PrimaryThemeName:  "Rebels",
+			PrimarySongTitle:  "Sun Wukong Theme",
+		},
+	}
+
+	relationships := []dto.RelationRecord{
+		{
+			Slug:                "lin-daiyu--sun-wu-kong--mirror",
+			Name:                "Lin Daiyu × Sun Wukong",
+			Summary:             "Two people who defend their inner truth in opposite but equally stubborn ways.",
+			OneLineDefinition:   "Sensitivity and defiance become two different methods of refusing a false life.",
+			CoverURL:            "/assets/images/characters/lin-daiyu.webp",
+			RelationTypeCode:    "mirror",
+			RelationTypeName:    "Mirror",
+			EmotionalTone:       "Tense but illuminating",
+			ConnectionTrigger:   "They recognize in each other a refusal to submit to a false order.",
+			SustainingMechanism: "Contrast keeps the relationship vivid: grief answers revolt, revolt answers grief.",
+			PowerStructure:      "Neither dominates; their energy comes from contrast rather than control.",
+			DependencyPattern:   "They do not need each other directly, but they reveal alternate forms of resistance.",
+			RelationConflict:    "Their refusal points in different directions: one toward grief, one toward revolt.",
+			RelationArc:         "The relation begins as contrast and deepens into mutual illumination.",
+			FateImpact:          "Each becomes a lens for the other's unfinished possibility.",
+			SymbolicImages:      []string{"lantern", "staff"},
+			ThemeTags:           []string{"tragic", "rebels"},
+			SourceCharacter: dto.RelationshipCharacterRef{
+				Slug:     "lin-daiyu",
+				Name:     "Lin Daiyu",
+				CoverURL: "/assets/images/characters/lin-daiyu.webp",
+				Summary:  "A character of sensitivity, dignity, and emotional lucidity.",
+			},
+			TargetCharacter: dto.RelationshipCharacterRef{
+				Slug:     "sun-wu-kong",
+				Name:     "Sun Wukong",
+				CoverURL: "/assets/images/characters/sun-wu-kong.webp",
+				Summary:  "A figure of freedom who refuses submission to absurd order.",
+			},
+			Phenomenology: dto.RelationPhenomenology{
+				Body:     "The body tightens before either one yields.",
+				Time:     "Time feels suspended between recognition and divergence.",
+				Space:    "Space becomes charged whenever they occupy the same moral field.",
+				Gaze:     "Their gaze is less affectionate than clarifying.",
+				Language: "Language cuts rather than soothes.",
+			},
+			RelationPalette: []dto.RelationPaletteItem{
+				{Name: "Lantern Gold", Hex: "#D6B36A"},
+				{Name: "Storm Ink", Hex: "#1A1D23"},
+			},
+			RelationKeywords: []string{"mirror", "defiance", "lucidity"},
+			Events: []dto.RelationEvent{
+				{StageNo: 1, StageCode: "recognition", Title: "Recognition", Summary: "They first see in each other an unwillingness to live falsely."},
+				{StageNo: 2, StageCode: "contrast", Title: "Contrast", Summary: "Their responses diverge, making the distance between grief and revolt visible."},
+			},
+			PrimarySong: &dto.RelationSong{
+				Slug:               "lin-daiyu--sun-wu-kong--mirror-theme",
+				Title:              "Mirror of Defiance",
+				Summary:            "A relationship song about two incompatible but illuminating refusals.",
+				CoverURL:           "/assets/images/characters/lin-daiyu.webp",
+				AudioURL:           "/assets/audio/lin-daiyu-theme-v1.mp3",
+				SongCoreTheme:      "mirror resistance",
+				SongEmotionalCurve: "restraint -> flare -> recognition",
+				SongStyles:         []string{"cinematic", "lyrical"},
+				VocalProfile:       "dual vocal tension",
+			},
 		},
 	}
 
 	return &mockCatalogRepo{
-		characters: characters,
-		works:      works,
-		creators:   creators,
-		themes:     themes,
-		songs:      songs,
+		characters:    characters,
+		relationships: relationships,
+		works:         works,
+		creators:      creators,
+		themes:        themes,
+		songs:         songs,
 	}
 }
 
@@ -60,6 +193,7 @@ func (m *mockCatalogRepo) Home() (dto.HomePayload, error) {
 	if len(m.characters) > 0 {
 		featured = m.characters[0]
 	}
+
 	return dto.HomePayload{
 		FeaturedCharacter: featured,
 		LatestCharacters:  m.characters,
@@ -80,17 +214,8 @@ func (m *mockCatalogRepo) RandomCharacter(theme string, exclude []string) (dto.C
 		if _, skip := excluded[item.Slug]; skip {
 			continue
 		}
-		if theme != "" {
-			matched := false
-			for _, themeSlug := range item.ThemeSlugs {
-				if themeSlug == theme {
-					matched = true
-					break
-				}
-			}
-			if !matched {
-				continue
-			}
+		if theme != "" && !containsString(item.ThemeSlugs, theme) {
+			continue
 		}
 		pool = append(pool, item)
 	}
@@ -104,32 +229,90 @@ func (m *mockCatalogRepo) RandomCharacter(theme string, exclude []string) (dto.C
 func (m *mockCatalogRepo) ListCharacters() ([]dto.Character, error) { return m.characters, nil }
 
 func (m *mockCatalogRepo) GetCharacterDetail(slug string) (dto.CharacterDetail, error) {
-	for _, c := range m.characters {
-		if c.Slug == slug {
-			return dto.CharacterDetail{
-				Character:      c,
-				CoreIdentity:   c.Summary,
-				CoreFear:       "待补充",
-				CoreConflict:   "待补充",
-				EmotionalTone:  "待补充",
-				SurfaceTraits:  []string{"待补充"},
-				Timeline:       []dto.CharacterTimelineItem{},
-				RelatedWorks:   m.works,
-				RelatedThemes:  m.themes,
-				RelatedSongs:   filterSongsByCharacter(m.songs, slug),
-				RelatedCreator: m.creators,
-			}, nil
+	for _, character := range m.characters {
+		if character.Slug != slug {
+			continue
+		}
+
+		themes := make([]dto.Theme, 0)
+		for _, themeSlug := range character.ThemeSlugs {
+			for _, theme := range m.themes {
+				if theme.Slug == themeSlug {
+					themes = append(themes, theme)
+				}
+			}
+		}
+
+		works := make([]dto.Work, 0)
+		for _, workSlug := range character.WorkSlugs {
+			for _, work := range m.works {
+				if work.Slug == workSlug {
+					works = append(works, work)
+				}
+			}
+		}
+
+		creators := make([]dto.Creator, 0)
+		for _, work := range works {
+			switch work.Slug {
+			case "dream-of-the-red-chamber":
+				creators = append(creators, m.creators[0])
+			case "journey-to-the-west":
+				creators = append(creators, m.creators[1])
+			}
+		}
+
+		return dto.CharacterDetail{
+			Character:          character,
+			CoreIdentity:       character.Summary,
+			PrimaryMotivation:  "To protect inner truth from compromise.",
+			CoreFear:           "A life emptied of meaning.",
+			PsychologicalWound: "The self is wounded whenever truth is denied or humiliated.",
+			CoreConflict:       "The desire to stay true collides with the world’s demand for adaptation.",
+			EmotionalTone:      "Tense, lucid, and quietly intense.",
+			SurfaceTraits:      character.SurfaceTraits,
+			ValuesTags:         []string{"truth", "dignity"},
+			SymbolicImages:     []string{"rain", "lantern"},
+			Timeline:           []dto.CharacterTimelineItem{},
+			RelatedWorks:       works,
+			RelatedThemes:      themes,
+			RelatedSongs:       filterSongsByCharacter(m.songs, slug),
+			RelatedCreator:     creators,
+		}, nil
+	}
+
+	return dto.CharacterDetail{}, errors.New("character not found")
+}
+
+func (m *mockCatalogRepo) ListRelationships(characterSlug string) ([]dto.RelationRecord, error) {
+	if strings.TrimSpace(characterSlug) == "" {
+		return m.relationships, nil
+	}
+
+	list := make([]dto.RelationRecord, 0, len(m.relationships))
+	for _, item := range m.relationships {
+		if item.SourceCharacter.Slug == characterSlug || item.TargetCharacter.Slug == characterSlug {
+			list = append(list, item)
 		}
 	}
-	return dto.CharacterDetail{}, errors.New("character not found")
+	return list, nil
+}
+
+func (m *mockCatalogRepo) GetRelationshipDetail(slug string) (dto.RelationRecord, error) {
+	for _, item := range m.relationships {
+		if item.Slug == slug {
+			return item, nil
+		}
+	}
+	return dto.RelationRecord{}, errors.New("relationship not found")
 }
 
 func (m *mockCatalogRepo) ListWorks() ([]dto.Work, error) { return m.works, nil }
 
 func (m *mockCatalogRepo) GetWorkDetail(slug string) (dto.Work, error) {
-	for _, v := range m.works {
-		if v.Slug == slug {
-			return v, nil
+	for _, item := range m.works {
+		if item.Slug == slug {
+			return item, nil
 		}
 	}
 	return dto.Work{}, errors.New("work not found")
@@ -138,9 +321,9 @@ func (m *mockCatalogRepo) GetWorkDetail(slug string) (dto.Work, error) {
 func (m *mockCatalogRepo) ListCreators() ([]dto.Creator, error) { return m.creators, nil }
 
 func (m *mockCatalogRepo) GetCreatorDetail(slug string) (dto.Creator, error) {
-	for _, v := range m.creators {
-		if v.Slug == slug {
-			return v, nil
+	for _, item := range m.creators {
+		if item.Slug == slug {
+			return item, nil
 		}
 	}
 	return dto.Creator{}, errors.New("creator not found")
@@ -149,19 +332,18 @@ func (m *mockCatalogRepo) GetCreatorDetail(slug string) (dto.Creator, error) {
 func (m *mockCatalogRepo) ListThemes() ([]dto.Theme, error) { return m.themes, nil }
 
 func (m *mockCatalogRepo) GetThemeDetail(slug string) (dto.ThemeDetail, error) {
-	for _, t := range m.themes {
-		if t.Slug == slug {
-			chars := make([]dto.Character, 0)
-			for _, c := range m.characters {
-				for _, ts := range c.ThemeSlugs {
-					if ts == slug {
-						chars = append(chars, c)
-						break
-					}
-				}
-			}
-			return dto.ThemeDetail{Theme: t, Characters: chars}, nil
+	for _, theme := range m.themes {
+		if theme.Slug != slug {
+			continue
 		}
+
+		characters := make([]dto.Character, 0)
+		for _, character := range m.characters {
+			if containsString(character.ThemeSlugs, slug) {
+				characters = append(characters, character)
+			}
+		}
+		return dto.ThemeDetail{Theme: theme, Characters: characters}, nil
 	}
 	return dto.ThemeDetail{}, errors.New("theme not found")
 }
@@ -194,12 +376,20 @@ func (m *mockCatalogRepo) SearchCatalog(keyword string, limit int) (dto.SearchRe
 		}
 		themeSongTitle := ""
 		if len(item.SongSlugs) > 0 {
-			themeSongTitle = "人物之歌"
+			themeSongTitle = item.PrimarySongTitle
 		}
 		out.Characters = append(out.Characters, dto.CharacterListItemResponse{
-			ID: item.Slug, Slug: item.Slug, Name: item.Name, CoverURL: item.CoverURL,
-			Summary: item.Summary, OneLineDefinition: item.OneLineDefinition, CharacterTypeCode: item.CharacterTypeCode,
-			HasSong: len(item.SongSlugs) > 0, ThemeSongTitle: themeSongTitle,
+			ID:                item.Slug,
+			Slug:              item.Slug,
+			Name:              item.Name,
+			CoverURL:          item.CoverURL,
+			Summary:           item.Summary,
+			OneLineDefinition: item.OneLineDefinition,
+			CharacterTypeCode: item.CharacterTypeCode,
+			WorkTitle:         item.PrimaryWorkTitle,
+			Tags:              []string{item.PrimaryThemeName},
+			HasSong:           len(item.SongSlugs) > 0,
+			ThemeSongTitle:    themeSongTitle,
 		})
 	}
 
@@ -208,8 +398,13 @@ func (m *mockCatalogRepo) SearchCatalog(keyword string, limit int) (dto.SearchRe
 			continue
 		}
 		out.Works = append(out.Works, dto.WorkListItemResponse{
-			ID: item.Slug, Slug: item.Slug, Title: item.Title, CoverURL: item.CoverURL,
-			Summary: item.Summary, WorkTypeCode: item.TypeCode, CharacterCount: len(item.CharacterSlugs),
+			ID:             item.Slug,
+			Slug:           item.Slug,
+			Title:          item.Title,
+			CoverURL:       item.CoverURL,
+			Summary:        item.Summary,
+			WorkTypeCode:   item.TypeCode,
+			CharacterCount: len(item.CharacterSlugs),
 		})
 	}
 
@@ -218,8 +413,14 @@ func (m *mockCatalogRepo) SearchCatalog(keyword string, limit int) (dto.SearchRe
 			continue
 		}
 		out.Creators = append(out.Creators, dto.CreatorListItemResponse{
-			ID: item.Slug, Slug: item.Slug, Name: item.Name, CoverURL: item.CoverURL,
-			Summary: item.Summary, CreatorTypeCode: item.CreatorTypeCode, EraText: item.EraText, WorkCount: len(item.WorkSlugs),
+			ID:              item.Slug,
+			Slug:            item.Slug,
+			Name:            item.Name,
+			CoverURL:        item.CoverURL,
+			Summary:         item.Summary,
+			CreatorTypeCode: item.CreatorTypeCode,
+			EraText:         item.EraText,
+			WorkCount:       len(item.WorkSlugs),
 		})
 	}
 
@@ -228,8 +429,12 @@ func (m *mockCatalogRepo) SearchCatalog(keyword string, limit int) (dto.SearchRe
 			continue
 		}
 		out.Themes = append(out.Themes, dto.ThemeListItemResponse{
-			ID: item.Slug, Slug: item.Slug, Name: item.Name, CoverURL: item.CoverURL,
-			Summary: item.Summary, Category: item.Category,
+			ID:       item.Slug,
+			Slug:     item.Slug,
+			Name:     item.Name,
+			CoverURL: item.CoverURL,
+			Summary:  item.Summary,
+			Category: item.Category,
 		})
 	}
 
@@ -238,8 +443,13 @@ func (m *mockCatalogRepo) SearchCatalog(keyword string, limit int) (dto.SearchRe
 			continue
 		}
 		out.Songs = append(out.Songs, dto.SongListItemResponse{
-			ID: item.Slug, Slug: item.Slug, Title: item.Title, CharacterSlug: item.CharacterSlug,
-			CoverURL: item.CoverURL, AudioURL: item.AudioURL, Styles: item.Styles,
+			ID:            item.Slug,
+			Slug:          item.Slug,
+			Title:         item.Title,
+			CharacterSlug: item.CharacterSlug,
+			CoverURL:      item.CoverURL,
+			AudioURL:      item.AudioURL,
+			Styles:        item.Styles,
 		})
 	}
 
@@ -248,10 +458,19 @@ func (m *mockCatalogRepo) SearchCatalog(keyword string, limit int) (dto.SearchRe
 
 func filterSongsByCharacter(in []dto.Song, slug string) []dto.Song {
 	out := make([]dto.Song, 0)
-	for _, s := range in {
-		if s.CharacterSlug == slug {
-			out = append(out, s)
+	for _, item := range in {
+		if item.CharacterSlug == slug {
+			out = append(out, item)
 		}
 	}
 	return out
+}
+
+func containsString(list []string, target string) bool {
+	for _, item := range list {
+		if item == target {
+			return true
+		}
+	}
+	return false
 }

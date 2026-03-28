@@ -54,6 +54,7 @@ func NewHTTPServer(cfg config.Config) *gin.Engine {
 	catalogSvc := service.NewCatalogService(catalogRepo, assetURLBuilder)
 	catalogHandler := handler.NewCatalogHandler(catalogSvc, cfg.PublicBaseURL, cfg.FrontendBaseURL)
 	r.GET("/share/character/:slug", catalogHandler.CharacterSharePage)
+	r.GET("/share/relation/:slug", catalogHandler.RelationSharePage)
 	adminSvc := service.NewAdminService(adminRepo, assetURLBuilder)
 	adminHandler := handler.NewAdminHandler(adminSvc)
 	adminWorkCreatorSvc := service.NewAdminWorkCreatorService(adminRepo, assetURLBuilder)
@@ -76,6 +77,10 @@ func NewHTTPServer(cfg config.Config) *gin.Engine {
 		api.GET("/discover/random", catalogHandler.RandomCharacter)
 		api.GET("/characters", catalogHandler.ListCharacters)
 		api.GET("/characters/:slug", catalogHandler.GetCharacterDetail)
+		api.GET("/relations", catalogHandler.ListRelationships)
+		api.GET("/relations/:slug", catalogHandler.GetRelationshipDetail)
+		api.GET("/relationships", catalogHandler.ListRelationships)
+		api.GET("/relationships/:slug", catalogHandler.GetRelationshipDetail)
 		api.GET("/works", catalogHandler.ListWorks)
 		api.GET("/works/:slug", catalogHandler.GetWorkDetail)
 		api.GET("/creators", catalogHandler.ListCreators)
@@ -113,6 +118,13 @@ func NewHTTPServer(cfg config.Config) *gin.Engine {
 			adminProtected.PATCH("/songs/:ref", adminHandler.UpdateSong)
 			adminProtected.DELETE("/songs/:ref", adminHandler.DeleteSong)
 
+			adminProtected.GET("/relations", adminHandler.ListRelations)
+			adminProtected.GET("/relations/page", adminPageHandler.Relations)
+			adminProtected.GET("/relations/:ref", adminHandler.GetRelation)
+			adminProtected.POST("/relations", adminHandler.CreateRelation)
+			adminProtected.PATCH("/relations/:ref", adminHandler.UpdateRelation)
+			adminProtected.DELETE("/relations/:ref", adminHandler.DeleteRelation)
+
 			adminProtected.GET("/themes", adminHandler.ListThemes)
 			adminProtected.GET("/themes/page", adminPageHandler.Themes)
 			adminProtected.GET("/themes/:ref", adminHandler.GetTheme)
@@ -149,6 +161,8 @@ func NewHTTPServer(cfg config.Config) *gin.Engine {
 
 			adminProtected.POST("/imports/validate", adminImportHandler.Validate)
 			adminProtected.POST("/imports/run", adminImportHandler.Run)
+			adminProtected.POST("/relation-imports/validate", adminImportHandler.ValidateRelations)
+			adminProtected.POST("/relation-imports/run", adminImportHandler.RunRelations)
 		}
 
 		// Vben compatible auth endpoints

@@ -90,9 +90,13 @@ func (s *CatalogService) Home() (dto.HomeResponseData, error) {
 	for _, item := range home.Themes {
 		themeDetail, _ := s.repo.GetThemeDetail(item.Slug)
 		theme := s.normalizeTheme(item)
+		itemCount := len(themeDetail.Characters)
+		if normalizeThemeSubjectType(theme.SubjectType) == "relation" {
+			itemCount = len(themeDetail.Relationships)
+		}
 		out.RecommendedThemes = append(out.RecommendedThemes, dto.HomeThemeCard{
 			ID: theme.Slug, Slug: theme.Slug, Name: theme.Name, CoverURL: theme.CoverURL,
-			Summary: theme.Summary, CharacterCount: len(themeDetail.Characters),
+			Summary: theme.Summary, CharacterCount: itemCount,
 		})
 	}
 	return out, nil
@@ -187,6 +191,7 @@ func (s *CatalogService) GetCharacterDetail(slug string) (dto.CharacterDetailRes
 		SymbolicImages:       s.sliceOrDefault(item.SymbolicImages, []string{}),
 		Elements:             s.sliceOrDefault(item.Elements, []string{}),
 		SoundscapeKeywords:   s.sliceOrDefault(item.SoundscapeKeywords, []string{}),
+		KeyRelationships:     s.buildKeyRelationships(item.Slug, 4),
 		SimilarCharacters:    similar,
 	}, nil
 }
@@ -282,9 +287,14 @@ func (s *CatalogService) ListThemes() ([]dto.ThemeListItemResponse, error) {
 	for _, item := range list {
 		detail, _ := s.repo.GetThemeDetail(item.Slug)
 		theme := s.normalizeTheme(item)
+		itemCount := len(detail.Characters)
+		if normalizeThemeSubjectType(theme.SubjectType) == "relation" {
+			itemCount = len(detail.Relationships)
+		}
 		out = append(out, dto.ThemeListItemResponse{
 			ID: theme.Slug, Slug: theme.Slug, Name: theme.Name, CoverURL: theme.CoverURL,
-			Summary: theme.Summary, Category: theme.Category, CharacterCount: len(detail.Characters),
+			Summary: theme.Summary, Category: theme.Category, SubjectType: theme.SubjectType,
+			ItemCount: itemCount, CharacterCount: itemCount,
 		})
 	}
 	return out, nil
@@ -297,6 +307,7 @@ func (s *CatalogService) GetThemeDetail(slug string) (dto.ThemeDetailResponse, e
 	}
 	item.Theme = s.normalizeTheme(item.Theme)
 	item.Characters = s.normalizeCharacters(item.Characters)
+	item.Relationships = s.normalizeRelationRecords(item.Relationships)
 	allCharacters, _ := s.repo.ListCharacters()
 	characterBySlug := make(map[string]dto.Character, len(allCharacters))
 	for _, current := range allCharacters {
@@ -310,9 +321,14 @@ func (s *CatalogService) GetThemeDetail(slug string) (dto.ThemeDetailResponse, e
 		}
 		chars = append(chars, s.buildCharacterListItem(c))
 	}
+	relationships := make([]dto.RelationshipListItemResponse, 0, len(item.Relationships))
+	for _, relation := range item.Relationships {
+		relationships = append(relationships, s.buildRelationshipListItem(relation, ""))
+	}
 	return dto.ThemeDetailResponse{
 		ID: item.Theme.Slug, Slug: item.Theme.Slug, Name: item.Theme.Name, CoverURL: item.Theme.CoverURL,
-		Summary: item.Theme.Summary, Category: item.Theme.Category, Characters: chars,
+		Summary: item.Theme.Summary, Category: item.Theme.Category, SubjectType: item.Theme.SubjectType,
+		Characters: chars, Relationships: relationships,
 	}, nil
 }
 
@@ -477,6 +493,15 @@ func contains(list []string, target string) bool {
 		}
 	}
 	return false
+}
+
+func normalizeThemeSubjectType(subjectType string) string {
+	switch strings.ToLower(strings.TrimSpace(subjectType)) {
+	case "relation":
+		return "relation"
+	default:
+		return "character"
+	}
 }
 
 func firstOrEmpty(list []string) string {
@@ -716,6 +741,7 @@ func (s *CatalogService) normalizeThemes(in []dto.Theme) []dto.Theme {
 
 func (s *CatalogService) normalizeTheme(in dto.Theme) dto.Theme {
 	in.CoverURL = s.assets.Normalize(in.CoverURL)
+	in.SubjectType = normalizeThemeSubjectType(in.SubjectType)
 	return in
 }
 
@@ -723,6 +749,14 @@ func (s *CatalogService) normalizeSongs(in []dto.Song) []dto.Song {
 	out := make([]dto.Song, 0, len(in))
 	for _, v := range in {
 		out = append(out, s.normalizeSong(v))
+	}
+	return out
+}
+
+func (s *CatalogService) normalizeRelationRecords(in []dto.RelationRecord) []dto.RelationRecord {
+	out := make([]dto.RelationRecord, 0, len(in))
+	for _, v := range in {
+		out = append(out, s.normalizeRelationRecord(v))
 	}
 	return out
 }

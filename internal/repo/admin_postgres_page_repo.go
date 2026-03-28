@@ -128,24 +128,30 @@ SELECT COUNT(1) FROM public.pm_themes t
 WHERE ($1 = '' OR t.slug ILIKE $2 OR t.code ILIKE $2 OR COALESCE(t.name_zh,'') ILIKE $2 OR COALESCE(t.summary,'') ILIKE $2 OR COALESCE(t.category,'') ILIKE $2)
   AND ($3 = '' OR COALESCE(t.category,'') = $3)
   AND ($4 = '' OR CASE WHEN t.is_active THEN 'published' ELSE 'archived' END = $4)
-`, q.Keyword, pattern, q.Category, q.Status).Scan(&total)
+  AND ($5 = '' OR COALESCE(t.subject_type, 'character') = $5)
+`, q.Keyword, pattern, q.Category, q.Status, q.SubjectType).Scan(&total)
 	if err != nil {
 		return dto.PageResult[dto.AdminTheme]{}, err
 	}
 	limit, offset := pageClause(page, pageSize)
 	rows, err := r.pool.Query(ctx, `
 SELECT t.id::text, t.slug, t.name_zh, t.code, t.category, COALESCE(t.summary,''), COALESCE(t.cover_url,''), COALESCE(t.sort_order,0),
+       COALESCE(t.subject_type, 'character'),
        CASE WHEN t.is_active THEN 'published' ELSE 'archived' END,
        COALESCE((SELECT array_agg(c.slug ORDER BY x.is_primary DESC, x.weight DESC, c.name ASC)
                  FROM public.pm_character_themes x JOIN public.pm_characters c ON c.id = x.character_id
-                 WHERE x.theme_id = t.id AND c.is_active = TRUE), ARRAY[]::text[])
+                 WHERE x.theme_id = t.id AND c.is_active = TRUE), ARRAY[]::text[]),
+       COALESCE((SELECT array_agg(r.slug ORDER BY x.is_primary DESC, x.sort_order ASC, r.slug ASC)
+                 FROM public.pm_relation_themes x JOIN public.pm_relations r ON r.slug = x.relation_slug
+                 WHERE x.theme_slug = t.slug AND r.is_active = TRUE), ARRAY[]::text[])
 FROM public.pm_themes t
 WHERE ($1 = '' OR t.slug ILIKE $2 OR t.code ILIKE $2 OR COALESCE(t.name_zh,'') ILIKE $2 OR COALESCE(t.summary,'') ILIKE $2 OR COALESCE(t.category,'') ILIKE $2)
   AND ($3 = '' OR COALESCE(t.category,'') = $3)
   AND ($4 = '' OR CASE WHEN t.is_active THEN 'published' ELSE 'archived' END = $4)
-ORDER BY t.sort_order ASC, t.updated_at DESC, t.name_zh ASC
-LIMIT $5 OFFSET $6
-`, q.Keyword, pattern, q.Category, q.Status, limit, offset)
+  AND ($5 = '' OR COALESCE(t.subject_type, 'character') = $5)
+ORDER BY t.created_at DESC, t.updated_at DESC, t.name_zh ASC
+ LIMIT $6 OFFSET $7
+`, q.Keyword, pattern, q.Category, q.Status, q.SubjectType, limit, offset)
 	if err != nil {
 		return dto.PageResult[dto.AdminTheme]{}, err
 	}
@@ -153,7 +159,7 @@ LIMIT $5 OFFSET $6
 	items := make([]dto.AdminTheme, 0)
 	for rows.Next() {
 		var item dto.AdminTheme
-		if err := rows.Scan(&item.ID, &item.Slug, &item.Name, &item.Code, &item.Category, &item.Summary, &item.CoverURL, &item.SortOrder, &item.Status, &item.CharacterSlugs); err != nil {
+		if err := rows.Scan(&item.ID, &item.Slug, &item.Name, &item.Code, &item.Category, &item.Summary, &item.CoverURL, &item.SortOrder, &item.SubjectType, &item.Status, &item.CharacterSlugs, &item.RelationSlugs); err != nil {
 			return dto.PageResult[dto.AdminTheme]{}, err
 		}
 		items = append(items, item)

@@ -8,6 +8,8 @@ type CatalogRepo interface {
 
 	ListCharacters() ([]dto.Character, error)
 	GetCharacterDetail(slug string) (dto.CharacterDetail, error)
+	ListRelationships(characterSlug string) ([]dto.RelationRecord, error)
+	GetRelationshipDetail(slug string) (dto.RelationRecord, error)
 
 	ListWorks() ([]dto.Work, error)
 	GetWorkDetail(slug string) (dto.Work, error)

@@ -81,16 +81,18 @@ type Creator struct {
 }
 
 type Theme struct {
-	Slug     string `json:"slug"`
-	Name     string `json:"name"`
-	Summary  string `json:"summary"`
-	CoverURL string `json:"coverUrl"`
-	Category string `json:"category,omitempty"`
+	Slug        string `json:"slug"`
+	Name        string `json:"name"`
+	Summary     string `json:"summary"`
+	CoverURL    string `json:"coverUrl"`
+	Category    string `json:"category,omitempty"`
+	SubjectType string `json:"subjectType,omitempty"`
 }
 
 type ThemeDetail struct {
 	Theme
-	Characters []Character `json:"characters"`
+	Characters    []Character      `json:"characters"`
+	Relationships []RelationRecord `json:"relationships"`
 }
 
 type Song struct {
@@ -253,6 +255,163 @@ type CharacterRelationshipPattern struct {
 	Value string `json:"value"`
 }
 
+type RelationshipCharacterRef struct {
+	Slug     string `json:"slug"`
+	Name     string `json:"name"`
+	CoverURL string `json:"coverUrl"`
+	Summary  string `json:"summary,omitempty"`
+}
+
+type RelationPaletteItem struct {
+	Name string `json:"name,omitempty"`
+	Hex  string `json:"hex"`
+}
+
+type RelationPhenomenology struct {
+	Body     string `json:"body,omitempty"`
+	Time     string `json:"time,omitempty"`
+	Space    string `json:"space,omitempty"`
+	Gaze     string `json:"gaze,omitempty"`
+	Language string `json:"language,omitempty"`
+}
+
+type RelationEvent struct {
+	StageNo      int    `json:"stage_no"`
+	StageCode    string `json:"stage_code,omitempty"`
+	Title        string `json:"title"`
+	Summary      string `json:"summary,omitempty"`
+	TensionShift string `json:"tension_shift,omitempty"`
+	PowerShift   string `json:"power_shift,omitempty"`
+	FateImpact   string `json:"fate_impact,omitempty"`
+	SourceState  string `json:"source_state,omitempty"`
+	TargetState  string `json:"target_state,omitempty"`
+	EventQuote   string `json:"event_quote,omitempty"`
+	ColorHex     string `json:"color_hex,omitempty"`
+}
+
+type RelationSong struct {
+	Slug               string   `json:"slug"`
+	Title              string   `json:"title"`
+	Subtitle           string   `json:"subtitle,omitempty"`
+	Summary            string   `json:"summary,omitempty"`
+	CoverURL           string   `json:"cover_url,omitempty"`
+	AudioURL           string   `json:"audio_url,omitempty"`
+	SongCoreTheme      string   `json:"song_core_theme,omitempty"`
+	SongEmotionalCurve string   `json:"song_emotional_curve,omitempty"`
+	SongStyles         []string `json:"song_styles"`
+	VocalProfile       string   `json:"vocal_profile,omitempty"`
+	Lyric              string   `json:"lyric,omitempty"`
+}
+
+type RelationLink struct {
+	Slug         string `json:"slug"`
+	Title        string `json:"title"`
+	Subtitle     string `json:"subtitle,omitempty"`
+	CoverURL     string `json:"cover_url,omitempty"`
+	LinkTypeCode string `json:"link_type_code"`
+	Reason       string `json:"reason,omitempty"`
+}
+
+type RelationRecord struct {
+	Slug                   string
+	Name                   string
+	Subtitle               string
+	Summary                string
+	OneLineDefinition      string
+	CoverURL               string
+	RelationTypeCode       string
+	RelationTypeName       string
+	WorkSlug               string
+	WorkName               string
+	CoreTension            string
+	EmotionalTone          string
+	ConnectionTrigger      string
+	SustainingMechanism    string
+	RelationConflict       string
+	RelationArc            string
+	FateImpact             string
+	PowerStructure         string
+	DependencyPattern      string
+	SourcePerspective      string
+	SourceDesireInRelation string
+	SourceFearInRelation   string
+	SourceUnsaid           string
+	TargetPerspective      string
+	TargetDesireInRelation string
+	TargetFearInRelation   string
+	TargetUnsaid           string
+	Phenomenology          RelationPhenomenology
+	SymbolicImages         []string
+	ThemeTags              []string
+	RelationPalette        []RelationPaletteItem
+	RelationKeywords       []string
+	SourceCharacter        RelationshipCharacterRef
+	TargetCharacter        RelationshipCharacterRef
+	Events                 []RelationEvent
+	PrimarySong            *RelationSong
+	RelatedRelations       []RelationLink
+}
+
+type RelationshipListItemResponse struct {
+	ID                string                    `json:"id"`
+	Slug              string                    `json:"slug"`
+	Name              string                    `json:"name"`
+	Summary           string                    `json:"summary,omitempty"`
+	OneLineDefinition string                    `json:"oneLineDefinition,omitempty"`
+	CoverURL          string                    `json:"coverUrl"`
+	RelationType      string                    `json:"relationType"`
+	RelationLabel     string                    `json:"relationLabel,omitempty"`
+	WorkTitle         string                    `json:"workTitle,omitempty"`
+	Intensity         float64                   `json:"intensity,omitempty"`
+	Tags              []string                  `json:"tags"`
+	SourceCharacter   RelationshipCharacterRef  `json:"sourceCharacter"`
+	TargetCharacter   RelationshipCharacterRef  `json:"targetCharacter"`
+	Counterpart       *RelationshipCharacterRef `json:"counterpart,omitempty"`
+}
+
+type RelationshipDetailResponse struct {
+	Slug                    string                `json:"slug"`
+	Name                    string                `json:"name"`
+	Subtitle                string                `json:"subtitle,omitempty"`
+	RelationTypeCode        string                `json:"relation_type_code,omitempty"`
+	RelationTypeName        string                `json:"relation_type_name,omitempty"`
+	SourceCharacterSlug     string                `json:"source_character_slug"`
+	SourceCharacterName     string                `json:"source_character_name"`
+	SourceCharacterCoverURL string                `json:"source_character_cover_url,omitempty"`
+	TargetCharacterSlug     string                `json:"target_character_slug"`
+	TargetCharacterName     string                `json:"target_character_name"`
+	TargetCharacterCoverURL string                `json:"target_character_cover_url,omitempty"`
+	WorkSlug                string                `json:"work_slug,omitempty"`
+	WorkName                string                `json:"work_name,omitempty"`
+	CoreTension             string                `json:"core_tension,omitempty"`
+	EmotionalTone           string                `json:"emotional_tone,omitempty"`
+	OneLineDefinition       string                `json:"one_line_definition,omitempty"`
+	Summary                 string                `json:"summary,omitempty"`
+	CoverURL                string                `json:"cover_url,omitempty"`
+	ConnectionTrigger       string                `json:"connection_trigger,omitempty"`
+	SustainingMechanism     string                `json:"sustaining_mechanism,omitempty"`
+	RelationConflict        string                `json:"relation_conflict,omitempty"`
+	RelationArc             string                `json:"relation_arc,omitempty"`
+	FateImpact              string                `json:"fate_impact,omitempty"`
+	PowerStructure          string                `json:"power_structure,omitempty"`
+	DependencyPattern       string                `json:"dependency_pattern,omitempty"`
+	SourcePerspective       string                `json:"source_perspective,omitempty"`
+	SourceDesireInRelation  string                `json:"source_desire_in_relation,omitempty"`
+	SourceFearInRelation    string                `json:"source_fear_in_relation,omitempty"`
+	SourceUnsaid            string                `json:"source_unsaid,omitempty"`
+	TargetPerspective       string                `json:"target_perspective,omitempty"`
+	TargetDesireInRelation  string                `json:"target_desire_in_relation,omitempty"`
+	TargetFearInRelation    string                `json:"target_fear_in_relation,omitempty"`
+	TargetUnsaid            string                `json:"target_unsaid,omitempty"`
+	Phenomenology           RelationPhenomenology `json:"phenomenology"`
+	RelationPalette         []RelationPaletteItem `json:"relation_palette"`
+	SymbolicImages          []string              `json:"symbolic_images"`
+	RelationKeywords        []string              `json:"relation_keywords"`
+	RelationEvents          []RelationEvent       `json:"relation_events"`
+	PrimarySong             *RelationSong         `json:"primary_song"`
+	RelatedRelations        []RelationLink        `json:"related_relations"`
+}
+
 type CharacterDetailResponse struct {
 	ID                   string                         `json:"id"`
 	Slug                 string                         `json:"slug"`
@@ -290,6 +449,7 @@ type CharacterDetailResponse struct {
 	SymbolicImages       []string                       `json:"symbolicImages"`
 	Elements             []string                       `json:"elements"`
 	SoundscapeKeywords   []string                       `json:"soundscapeKeywords"`
+	KeyRelationships     []RelationshipListItemResponse `json:"keyRelationships"`
 	SimilarCharacters    []CharacterListItemResponse    `json:"similarCharacters"`
 }
 
@@ -345,17 +505,21 @@ type ThemeListItemResponse struct {
 	CoverURL       string `json:"coverUrl"`
 	Summary        string `json:"summary"`
 	Category       string `json:"category,omitempty"`
+	SubjectType    string `json:"subjectType,omitempty"`
+	ItemCount      int    `json:"itemCount"`
 	CharacterCount int    `json:"characterCount"`
 }
 
 type ThemeDetailResponse struct {
-	ID         string                      `json:"id"`
-	Slug       string                      `json:"slug"`
-	Name       string                      `json:"name"`
-	CoverURL   string                      `json:"coverUrl"`
-	Summary    string                      `json:"summary"`
-	Category   string                      `json:"category,omitempty"`
-	Characters []CharacterListItemResponse `json:"characters"`
+	ID            string                         `json:"id"`
+	Slug          string                         `json:"slug"`
+	Name          string                         `json:"name"`
+	CoverURL      string                         `json:"coverUrl"`
+	Summary       string                         `json:"summary"`
+	Category      string                         `json:"category,omitempty"`
+	SubjectType   string                         `json:"subjectType,omitempty"`
+	Characters    []CharacterListItemResponse    `json:"characters"`
+	Relationships []RelationshipListItemResponse `json:"relationships"`
 }
 
 type SongListItemResponse struct {

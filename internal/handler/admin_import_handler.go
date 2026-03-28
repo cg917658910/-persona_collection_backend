@@ -45,3 +45,31 @@ func (h *AdminImportHandler) Run(c *gin.Context) {
 	}
 	response.OK(c, result, nil)
 }
+
+func (h *AdminImportHandler) ValidateRelations(c *gin.Context) {
+	var in dto.AdminRelationImportRequest
+	if err := c.ShouldBindJSON(&in); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	result, err := h.service.ValidateRelations(in)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.OK(c, result, nil)
+}
+
+func (h *AdminImportHandler) RunRelations(c *gin.Context) {
+	var in dto.AdminRelationImportRequest
+	if err := c.ShouldBindJSON(&in); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	result, err := h.service.RunRelations(in)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.OK(c, result, nil)
+}

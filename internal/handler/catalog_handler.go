@@ -66,6 +66,16 @@ func (h *CatalogHandler) GetCharacterDetail(c *gin.Context) {
 	h.handleOne(c, data, err)
 }
 
+func (h *CatalogHandler) ListRelationships(c *gin.Context) {
+	list, err := h.service.ListRelationships(strings.TrimSpace(c.Query("character")))
+	h.handleList(c, gin.H{"items": list}, err)
+}
+
+func (h *CatalogHandler) GetRelationshipDetail(c *gin.Context) {
+	data, err := h.service.GetRelationshipDetail(c.Param("slug"))
+	h.handleOne(c, data, err)
+}
+
 func (h *CatalogHandler) CharacterSharePage(c *gin.Context) {
 	slug := strings.TrimSpace(c.Param("slug"))
 	character, err := h.service.GetCharacterDetail(slug)
@@ -82,8 +92,40 @@ func (h *CatalogHandler) CharacterSharePage(c *gin.Context) {
 	imageURL := html.EscapeString(h.shareImageURL(strings.TrimSpace(character.CoverURL)))
 	shareURL := html.EscapeString(strings.TrimRight(h.shareBaseURL, "/") + "/share/character/" + slug)
 	redirectURL := html.EscapeString(strings.TrimRight(h.frontendBaseURL, "/") + "/#/character/" + slug)
+	clientRedirectURL := strings.TrimRight(h.frontendBaseURL, "/") + "/#/character/" + slug
 
-	page := fmt.Sprintf(`<!doctype html>
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(h.shareHTMLPage(title, description, imageURL, shareURL, redirectURL, clientRedirectURL, "正在打开人物详情...", "如果没有自动跳转，请点这里")))
+}
+
+func (h *CatalogHandler) RelationSharePage(c *gin.Context) {
+	slug := strings.TrimSpace(c.Param("slug"))
+	relation, err := h.service.GetRelationshipDetail(slug)
+	if err != nil {
+		c.Data(http.StatusNotFound, "text/html; charset=utf-8", []byte(`<!doctype html><html><head><meta charset="utf-8"><title>Relation Not Found</title></head><body>Relation not found.</body></html>`))
+		return
+	}
+
+	title := html.EscapeString(strings.TrimSpace(relation.Name))
+	if title == "" {
+		title = html.EscapeString(strings.TrimSpace(relation.SourceCharacterName + " × " + relation.TargetCharacterName))
+	}
+	description := html.EscapeString(strings.TrimSpace(relation.OneLineDefinition))
+	if description == "" {
+		description = html.EscapeString(strings.TrimSpace(relation.Summary))
+	}
+	imageURL := html.EscapeString(h.shareImageURL(strings.TrimSpace(relation.CoverURL)))
+	shareURL := html.EscapeString(strings.TrimRight(h.shareBaseURL, "/") + "/share/relation/" + slug)
+	redirectURL := html.EscapeString(strings.TrimRight(h.frontendBaseURL, "/") + "/#/relationship/" + slug)
+	clientRedirectURL := strings.TrimRight(h.frontendBaseURL, "/") + "/#/relationship/" + slug
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(h.shareHTMLPage(title, description, imageURL, shareURL, redirectURL, clientRedirectURL, "正在打开关系详情...", "如果没有自动跳转，请点这里")))
+}
+
+func (h *CatalogHandler) shareHTMLPage(title, description, imageURL, shareURL, redirectURL, clientRedirectURL, loadingText, linkText string) string {
+	loadingText = html.EscapeString(loadingText)
+	linkText = html.EscapeString(linkText)
+
+	return fmt.Sprintf(`<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -110,8 +152,8 @@ func (h *CatalogHandler) CharacterSharePage(c *gin.Context) {
   <script>window.location.replace(%q)</script>
 </head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1115;color:#fff;padding:24px;">
-  <p>正在打开人物详情...</p>
-  <p><a href="%s" style="color:#d6b36a;">如果没有自动跳转，请点这里</a></p>
+  <p>%s</p>
+  <p><a href="%s" style="color:#d6b36a;">%s</a></p>
 </body>
 </html>`,
 		title,
@@ -128,11 +170,11 @@ func (h *CatalogHandler) CharacterSharePage(c *gin.Context) {
 		imageURL,
 		imageURL,
 		redirectURL,
-		strings.TrimRight(h.frontendBaseURL, "/")+"/#/character/"+slug,
+		clientRedirectURL,
+		loadingText,
 		redirectURL,
+		linkText,
 	)
-
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(page))
 }
 
 func (h *CatalogHandler) shareImageURL(raw string) string {

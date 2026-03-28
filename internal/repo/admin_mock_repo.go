@@ -12,6 +12,7 @@ import (
 type mockAdminRepo struct {
 	characters []dto.AdminCharacter
 	songs      []dto.AdminSong
+	relations  []dto.AdminRelation
 	themes     []dto.AdminTheme
 	works      []dto.AdminWork
 	creators   []dto.AdminCreator
@@ -39,6 +40,33 @@ func NewMockAdminRepo() AdminRepo {
 		songs: []dto.AdminSong{
 			{ID: "1", Slug: "lin-daiyu-theme-v1", Title: "林黛玉之歌", CharacterSlug: "lin-daiyu", CharacterName: "林黛玉", Summary: "清冷哀愁的真情独白。", CoverURL: "/assets/images/songs/lin-daiyu-theme-v1.webp", AudioURL: "/assets/audio/lin-daiyu-theme-v1.mp3", Status: "published", CoreTheme: "真情无所安放", Styles: []string{"国风", "抒情"}, EmotionalCurve: []string{"压抑", "柔痛", "余冷"}},
 			{ID: "2", Slug: "sun-wu-kong-theme-v1", Title: "孙悟空之歌", CharacterSlug: "sun-wu-kong", CharacterName: "孙悟空", Summary: "不服与守护交织的火焰。", CoverURL: "/assets/images/songs/sun-wu-kong-theme-v1.webp", AudioURL: "/assets/audio/sun-wu-kong-theme-v1.mp3", Status: "published", CoreTheme: "自由与责任", Styles: []string{"摇滚", "热血"}, EmotionalCurve: []string{"躁动", "爆发", "再燃"}},
+		},
+		relations: []dto.AdminRelation{
+			{
+				ID:                  "lin-daiyu-jia-baoyu-dream-of-the-red-chamber",
+				Slug:                "lin-daiyu-jia-baoyu-dream-of-the-red-chamber",
+				Name:                "Lin Daiyu x Jia Baoyu",
+				Summary:             "A bond sustained by recognition and eroded by suspension.",
+				OneLineDefinition:   "This is not ordinary love, but mutual recognition that cannot be stably chosen.",
+				Status:              "published",
+				SortOrder:           10,
+				RelationTypeCode:    "lover",
+				RelationTypeName:    "Lover",
+				WorkSlug:            "dream-of-the-red-chamber",
+				WorkName:            "Dream Of The Red Chamber",
+				SourceCharacterSlug: "lin-daiyu",
+				SourceCharacterName: "Lin Daiyu",
+				TargetCharacterSlug: "jia-baoyu",
+				TargetCharacterName: "Jia Baoyu",
+				ConnectionTrigger:   "Deep mutual recognition.",
+				SustainingMechanism: "Silence, testing, and repeated emotional confirmation.",
+				RelationConflict:    "Love cannot become stable worldly choice.",
+				RelationArc:         "Recognition to rupture.",
+				FateImpact:          "The bond permanently reshapes both lives.",
+				PowerStructure:      "Both are constrained by family order in different ways.",
+				DependencyPattern:   "One seeks certainty, the other keeps proving sincerity.",
+				ThemeSlugs:          []string{"tragic"},
+			},
 		},
 		themes: []dto.AdminTheme{
 			{ID: "1", Slug: "tragic", Name: "悲剧人格", Code: "tragic", Category: "destiny", Summary: "内在真实与命运难以相容。", CoverURL: "/assets/images/themes/tragic.webp", Status: "published", CharacterSlugs: []string{"lin-daiyu"}},
@@ -85,7 +113,9 @@ func NewMockAdminRepo() AdminRepo {
 	}
 }
 
-func (r *mockAdminRepo) ListAdminCharacters() ([]dto.AdminCharacter, error) { return append([]dto.AdminCharacter{}, r.characters...), nil }
+func (r *mockAdminRepo) ListAdminCharacters() ([]dto.AdminCharacter, error) {
+	return append([]dto.AdminCharacter{}, r.characters...), nil
+}
 func (r *mockAdminRepo) GetAdminCharacter(ref string) (dto.AdminCharacter, error) {
 	for _, item := range r.characters {
 		if item.ID == ref || item.Slug == ref {
@@ -96,7 +126,9 @@ func (r *mockAdminRepo) GetAdminCharacter(ref string) (dto.AdminCharacter, error
 }
 func (r *mockAdminRepo) CreateAdminCharacter(in dto.AdminCharacter) (dto.AdminCharacter, error) {
 	in.ID = fmt.Sprintf("%d", len(r.characters)+1)
-	if in.Status == "" { in.Status = "draft" }
+	if in.Status == "" {
+		in.Status = "draft"
+	}
 	r.characters = append([]dto.AdminCharacter{in}, r.characters...)
 	return in, nil
 }
@@ -104,7 +136,9 @@ func (r *mockAdminRepo) UpdateAdminCharacter(ref string, in dto.AdminCharacter) 
 	for idx, item := range r.characters {
 		if item.ID == ref || item.Slug == ref {
 			in.ID = item.ID
-			if in.Status == "" { in.Status = item.Status }
+			if in.Status == "" {
+				in.Status = item.Status
+			}
 			r.characters[idx] = in
 			return in, nil
 		}
@@ -121,16 +155,22 @@ func (r *mockAdminRepo) DeleteAdminCharacter(ref string) error {
 	return errors.New("admin character not found")
 }
 
-func (r *mockAdminRepo) ListAdminSongs() ([]dto.AdminSong, error) { return append([]dto.AdminSong{}, r.songs...), nil }
+func (r *mockAdminRepo) ListAdminSongs() ([]dto.AdminSong, error) {
+	return append([]dto.AdminSong{}, r.songs...), nil
+}
 func (r *mockAdminRepo) GetAdminSong(ref string) (dto.AdminSong, error) {
 	for _, item := range r.songs {
-		if item.ID == ref || item.Slug == ref { return item, nil }
+		if item.ID == ref || item.Slug == ref {
+			return item, nil
+		}
 	}
 	return dto.AdminSong{}, errors.New("admin song not found")
 }
 func (r *mockAdminRepo) CreateAdminSong(in dto.AdminSong) (dto.AdminSong, error) {
 	in.ID = fmt.Sprintf("%d", len(r.songs)+1)
-	if in.Status == "" { in.Status = "draft" }
+	if in.Status == "" {
+		in.Status = "draft"
+	}
 	r.songs = append([]dto.AdminSong{in}, r.songs...)
 	return in, nil
 }
@@ -138,7 +178,9 @@ func (r *mockAdminRepo) UpdateAdminSong(ref string, in dto.AdminSong) (dto.Admin
 	for idx, item := range r.songs {
 		if item.ID == ref || item.Slug == ref {
 			in.ID = item.ID
-			if in.Status == "" { in.Status = item.Status }
+			if in.Status == "" {
+				in.Status = item.Status
+			}
 			r.songs[idx] = in
 			return in, nil
 		}
@@ -155,16 +197,67 @@ func (r *mockAdminRepo) DeleteAdminSong(ref string) error {
 	return errors.New("admin song not found")
 }
 
-func (r *mockAdminRepo) ListAdminThemes() ([]dto.AdminTheme, error) { return append([]dto.AdminTheme{}, r.themes...), nil }
+func (r *mockAdminRepo) ListAdminRelations() ([]dto.AdminRelation, error) {
+	return append([]dto.AdminRelation{}, r.relations...), nil
+}
+func (r *mockAdminRepo) GetAdminRelation(ref string) (dto.AdminRelation, error) {
+	for _, item := range r.relations {
+		if item.ID == ref || item.Slug == ref {
+			return item, nil
+		}
+	}
+	return dto.AdminRelation{}, errors.New("admin relation not found")
+}
+func (r *mockAdminRepo) CreateAdminRelation(in dto.AdminRelation) (dto.AdminRelation, error) {
+	in.ID = in.Slug
+	if in.Status == "" {
+		in.Status = "draft"
+	}
+	r.relations = append([]dto.AdminRelation{in}, r.relations...)
+	return in, nil
+}
+func (r *mockAdminRepo) UpdateAdminRelation(ref string, in dto.AdminRelation) (dto.AdminRelation, error) {
+	for idx, item := range r.relations {
+		if item.ID == ref || item.Slug == ref {
+			in.ID = item.ID
+			if in.Status == "" {
+				in.Status = item.Status
+			}
+			r.relations[idx] = in
+			return in, nil
+		}
+	}
+	return dto.AdminRelation{}, errors.New("admin relation not found")
+}
+func (r *mockAdminRepo) DeleteAdminRelation(ref string) error {
+	for idx, item := range r.relations {
+		if item.ID == ref || item.Slug == ref {
+			r.relations = slices.Delete(r.relations, idx, idx+1)
+			return nil
+		}
+	}
+	return errors.New("admin relation not found")
+}
+
+func (r *mockAdminRepo) ListAdminThemes() ([]dto.AdminTheme, error) {
+	return append([]dto.AdminTheme{}, r.themes...), nil
+}
 func (r *mockAdminRepo) GetAdminTheme(ref string) (dto.AdminTheme, error) {
 	for _, item := range r.themes {
-		if item.ID == ref || item.Slug == ref { return item, nil }
+		if item.ID == ref || item.Slug == ref {
+			return item, nil
+		}
 	}
 	return dto.AdminTheme{}, errors.New("admin theme not found")
 }
 func (r *mockAdminRepo) CreateAdminTheme(in dto.AdminTheme) (dto.AdminTheme, error) {
 	in.ID = fmt.Sprintf("%d", len(r.themes)+1)
-	if in.Status == "" { in.Status = "draft" }
+	if in.Status == "" {
+		in.Status = "draft"
+	}
+	if in.SubjectType == "" {
+		in.SubjectType = "character"
+	}
 	r.themes = append([]dto.AdminTheme{in}, r.themes...)
 	return in, nil
 }
@@ -172,7 +265,12 @@ func (r *mockAdminRepo) UpdateAdminTheme(ref string, in dto.AdminTheme) (dto.Adm
 	for idx, item := range r.themes {
 		if item.ID == ref || item.Slug == ref {
 			in.ID = item.ID
-			if in.Status == "" { in.Status = item.Status }
+			if in.Status == "" {
+				in.Status = item.Status
+			}
+			if in.SubjectType == "" {
+				in.SubjectType = item.SubjectType
+			}
 			r.themes[idx] = in
 			return in, nil
 		}
@@ -189,17 +287,22 @@ func (r *mockAdminRepo) DeleteAdminTheme(ref string) error {
 	return errors.New("admin theme not found")
 }
 
-
-func (r *mockAdminRepo) ListAdminWorks() ([]dto.AdminWork, error) { return append([]dto.AdminWork{}, r.works...), nil }
+func (r *mockAdminRepo) ListAdminWorks() ([]dto.AdminWork, error) {
+	return append([]dto.AdminWork{}, r.works...), nil
+}
 func (r *mockAdminRepo) GetAdminWork(ref string) (dto.AdminWork, error) {
 	for _, item := range r.works {
-		if item.ID == ref || item.Slug == ref { return item, nil }
+		if item.ID == ref || item.Slug == ref {
+			return item, nil
+		}
 	}
 	return dto.AdminWork{}, errors.New("admin work not found")
 }
 func (r *mockAdminRepo) CreateAdminWork(in dto.AdminWork) (dto.AdminWork, error) {
 	in.ID = fmt.Sprintf("%d", len(r.works)+1)
-	if in.Status == "" { in.Status = "draft" }
+	if in.Status == "" {
+		in.Status = "draft"
+	}
 	r.works = append([]dto.AdminWork{in}, r.works...)
 	return in, nil
 }
@@ -207,7 +310,9 @@ func (r *mockAdminRepo) UpdateAdminWork(ref string, in dto.AdminWork) (dto.Admin
 	for idx, item := range r.works {
 		if item.ID == ref || item.Slug == ref {
 			in.ID = item.ID
-			if in.Status == "" { in.Status = item.Status }
+			if in.Status == "" {
+				in.Status = item.Status
+			}
 			r.works[idx] = in
 			return in, nil
 		}
@@ -224,16 +329,22 @@ func (r *mockAdminRepo) DeleteAdminWork(ref string) error {
 	return errors.New("admin work not found")
 }
 
-func (r *mockAdminRepo) ListAdminCreators() ([]dto.AdminCreator, error) { return append([]dto.AdminCreator{}, r.creators...), nil }
+func (r *mockAdminRepo) ListAdminCreators() ([]dto.AdminCreator, error) {
+	return append([]dto.AdminCreator{}, r.creators...), nil
+}
 func (r *mockAdminRepo) GetAdminCreator(ref string) (dto.AdminCreator, error) {
 	for _, item := range r.creators {
-		if item.ID == ref || item.Slug == ref { return item, nil }
+		if item.ID == ref || item.Slug == ref {
+			return item, nil
+		}
 	}
 	return dto.AdminCreator{}, errors.New("admin creator not found")
 }
 func (r *mockAdminRepo) CreateAdminCreator(in dto.AdminCreator) (dto.AdminCreator, error) {
 	in.ID = fmt.Sprintf("%d", len(r.creators)+1)
-	if in.Status == "" { in.Status = "draft" }
+	if in.Status == "" {
+		in.Status = "draft"
+	}
 	r.creators = append([]dto.AdminCreator{in}, r.creators...)
 	return in, nil
 }
@@ -241,7 +352,9 @@ func (r *mockAdminRepo) UpdateAdminCreator(ref string, in dto.AdminCreator) (dto
 	for idx, item := range r.creators {
 		if item.ID == ref || item.Slug == ref {
 			in.ID = item.ID
-			if in.Status == "" { in.Status = item.Status }
+			if in.Status == "" {
+				in.Status = item.Status
+			}
 			r.creators[idx] = in
 			return in, nil
 		}
@@ -257,7 +370,6 @@ func (r *mockAdminRepo) DeleteAdminCreator(ref string) error {
 	}
 	return errors.New("admin creator not found")
 }
-
 
 func (r *mockAdminRepo) ListAdminDictItems(dictKey string) ([]dto.AdminDictItem, error) {
 	items, ok := r.dicts[dictKey]
@@ -305,7 +417,6 @@ func (r *mockAdminRepo) DeleteAdminDictItem(dictKey, ref string) error {
 	return errors.New("admin dict item not found")
 }
 
-
 func (r *mockAdminRepo) PageAdminCharacters(q dto.PageQuery) (dto.PageResult[dto.AdminCharacter], error) {
 	list, _ := r.ListAdminCharacters()
 	return pageAdminCharacters(list, q), nil
@@ -313,6 +424,10 @@ func (r *mockAdminRepo) PageAdminCharacters(q dto.PageQuery) (dto.PageResult[dto
 func (r *mockAdminRepo) PageAdminSongs(q dto.PageQuery) (dto.PageResult[dto.AdminSong], error) {
 	list, _ := r.ListAdminSongs()
 	return pageAdminSongs(list, q), nil
+}
+func (r *mockAdminRepo) PageAdminRelations(q dto.PageQuery) (dto.PageResult[dto.AdminRelation], error) {
+	list, _ := r.ListAdminRelations()
+	return pageAdminRelations(list, q), nil
 }
 func (r *mockAdminRepo) PageAdminThemes(q dto.PageQuery) (dto.PageResult[dto.AdminTheme], error) {
 	list, _ := r.ListAdminThemes()
@@ -335,9 +450,13 @@ func paginateAdminSlice[T any](items []T, page, pageSize int) dto.PageResult[T] 
 	page, pageSize = dto.NormalizePage(page, pageSize)
 	total := len(items)
 	start := (page - 1) * pageSize
-	if start > total { start = total }
+	if start > total {
+		start = total
+	}
 	end := start + pageSize
-	if end > total { end = total }
+	if end > total {
+		end = total
+	}
 	return dto.PageResult[T]{Items: items[start:end], Total: total, Page: page, PageSize: pageSize}
 }
 func pageAdminCharacters(items []dto.AdminCharacter, q dto.PageQuery) dto.PageResult[dto.AdminCharacter] {
@@ -360,6 +479,22 @@ func pageAdminSongs(items []dto.AdminSong, q dto.PageQuery) dto.PageResult[dto.A
 	filtered := make([]dto.AdminSong, 0)
 	for _, item := range items {
 		if q.Keyword != "" && !strings.Contains(strings.ToLower(item.Title+item.Slug+item.Summary+item.CharacterName+item.CoreTheme), strings.ToLower(q.Keyword)) {
+			continue
+		}
+		if q.Status != "" && item.Status != q.Status {
+			continue
+		}
+		filtered = append(filtered, item)
+	}
+	return paginateAdminSlice(filtered, q.Page, q.PageSize)
+}
+func pageAdminRelations(items []dto.AdminRelation, q dto.PageQuery) dto.PageResult[dto.AdminRelation] {
+	filtered := make([]dto.AdminRelation, 0)
+	for _, item := range items {
+		if q.Keyword != "" && !strings.Contains(strings.ToLower(item.Name+item.Slug+item.Summary+item.OneLineDefinition+item.SourceCharacterName+item.TargetCharacterName+item.RelationTypeCode), strings.ToLower(q.Keyword)) {
+			continue
+		}
+		if q.RelationTypeCode != "" && item.RelationTypeCode != q.RelationTypeCode {
 			continue
 		}
 		if q.Status != "" && item.Status != q.Status {

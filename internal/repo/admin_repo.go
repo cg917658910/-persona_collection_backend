@@ -15,6 +15,12 @@ type AdminRepo interface {
 	UpdateAdminSong(ref string, in dto.AdminSong) (dto.AdminSong, error)
 	DeleteAdminSong(ref string) error
 
+	ListAdminRelations() ([]dto.AdminRelation, error)
+	GetAdminRelation(ref string) (dto.AdminRelation, error)
+	CreateAdminRelation(in dto.AdminRelation) (dto.AdminRelation, error)
+	UpdateAdminRelation(ref string, in dto.AdminRelation) (dto.AdminRelation, error)
+	DeleteAdminRelation(ref string) error
+
 	ListAdminThemes() ([]dto.AdminTheme, error)
 	GetAdminTheme(ref string) (dto.AdminTheme, error)
 	CreateAdminTheme(in dto.AdminTheme) (dto.AdminTheme, error)
@@ -41,4 +47,6 @@ type AdminRepo interface {
 
 	ValidateGeneratedPackage(pkg dto.GeneratedPackage) (dto.AdminImportResult, error)
 	ImportGeneratedPackage(pkg dto.GeneratedPackage) (dto.AdminImportResult, error)
+	ValidateRelationPackage(pkg dto.RelationImportPackage) (dto.AdminImportResult, error)
+	ImportRelationPackage(pkg dto.RelationImportPackage) (dto.AdminImportResult, error)
 }

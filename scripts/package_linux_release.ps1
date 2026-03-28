@@ -32,10 +32,27 @@ if (-not (Get-Command go -ErrorAction SilentlyContinue)) {
     throw "go is not available in PATH."
 }
 
-New-Item -ItemType Directory -Force -Path $distRoot | Out-Null
-if (Test-Path $stageDir) {
-    Remove-Item -Recurse -Force $stageDir
+function Clear-DirectoryBestEffort([string]$Path) {
+    if (-not (Test-Path $Path)) {
+        return
+    }
+
+    Get-ChildItem -Path $Path -Force | ForEach-Object {
+        $item = $_
+        $itemPath = if ($item -is [string]) { $item } elseif ($item.PSObject.Properties['FullName']) { $item.FullName } else { [string]$item }
+        try {
+            Remove-Item -Recurse -Force -LiteralPath $itemPath -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "Skip removing $itemPath : $($_.Exception.Message)"
+        }
+    }
 }
+
+if (Test-Path $distRoot) {
+    Clear-DirectoryBestEffort $distRoot
+}
+New-Item -ItemType Directory -Force -Path $distRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
 New-Item -ItemType Directory -Force -Path $deployDir | Out-Null
 New-Item -ItemType Directory -Force -Path $systemdDir | Out-Null
